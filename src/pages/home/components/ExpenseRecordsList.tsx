@@ -1,7 +1,11 @@
 import ItemCardLayout from "@/layout/ItemCardLayout";
 import { useExpenseStore, useUserSettingsStore } from "@/store";
 import { Clock12Icon, Pencil, Trash2 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import ExpenseRecordsFilter, {
+  DaysListItem,
+  lastSevenDays,
+} from "./ExpenseRecordsFilter";
 
 const formatDateTime = (datetime: string) => {
   const date = new Date(datetime);
@@ -27,15 +31,16 @@ const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
     setCurrentExpense,
   } = useExpenseStore();
   const currency = useUserSettingsStore((state) => state.currency);
+  const [selectedDate, setSelectedDate] = useState<DaysListItem>(
+    lastSevenDays[0]
+  );
 
   const expenseRecordsMemoized = useMemo(() => {
-    const today = new Date().toLocaleDateString("en-IN");
-
     // get all the expense records of today
     const todaysExpenseRecords = expenseRecords
       .filter((record) => {
         const was = new Date(record.datetime).toLocaleDateString("en-IN");
-        return was === today;
+        return was === selectedDate.value;
       })
       .reverse();
 
@@ -45,10 +50,14 @@ const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
     );
 
     return todaysExpenseRecords;
-  }, [expenseRecords, updateId]);
+  }, [expenseRecords, updateId, selectedDate]);
 
   return (
     <>
+      <ExpenseRecordsFilter
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+      />
       {expenseRecordsMemoized.map((record) => (
         <ItemCardLayout key={record.datetime} className="w-full">
           <div className="flex flex-col justify-between">

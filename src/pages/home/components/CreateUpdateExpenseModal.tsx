@@ -70,9 +70,11 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger className="p-3 rounded-lg bg-app-500 text-white flex gap-1 items-center w-fit">
-        <Plus className="h-4 w-4" />
-        <p>Add Expense</p>
+      <DialogTrigger
+        className="p-4 rounded-full bg-app-500 text-white flex gap-1 items-center w-fit fixed bottom-8 left-1/2 transform -translate-x-1/2"
+        title="Add Expense"
+      >
+        <Plus className="h-6 w-6" />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
