@@ -1,7 +1,4 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-import { ChevronLeft, Settings2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 type HeaderProps = {
   /**
@@ -37,12 +34,7 @@ type AppLayoutProps = {
 };
 
 const Header = (props: HeaderProps) => {
-  const {
-    title = "Spend Wisely",
-    back = false,
-    showSettingsIcon = true,
-  } = props;
-  const navigator = useNavigate();
+  const { title = "Spend Wisely" } = props;
   return (
     <div className="flex justify-center items-center my-4">
       {/* {Boolean(back) && (

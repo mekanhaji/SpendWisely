@@ -1,7 +1,7 @@
 import ItemCardLayout from "@/layout/ItemCardLayout";
 import { useExpenseStore, useUserSettingsStore } from "@/store";
 import { Clock12Icon, Pencil, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 const formatDateTime = (datetime: string) => {
   const date = new Date(datetime);
@@ -30,15 +30,15 @@ const Analytics = (props: AnalyticsProps) => {
 
   const expenseRecordsMemoized = useMemo(() => {
     // get all the expense records of today
-    const todaysExpenseRecords = expenseRecords.reverse();
+    const todaysExpenseRecords = [...expenseRecords].reverse();
 
     // update the current expense
     setCurrentExpense(
-      todaysExpenseRecords.reduce((acc, record) => acc + record.amount, 0)
+      todaysExpenseRecords.reduce((acc, record) => acc + record.amount, 0),
     );
 
     return todaysExpenseRecords;
-  }, [expenseRecords, updateId]);
+  }, [expenseRecords, setCurrentExpense, updateId]);
 
   return (
     <>

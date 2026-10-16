@@ -41,7 +41,7 @@ const Home = () => {
           </div>
         </TabsContent>
         <TabsContent value="settings">
-          <Settings />
+          <Settings showInstallBanner />
         </TabsContent>
       </main>
     </AppLayout>
