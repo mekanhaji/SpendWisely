@@ -6,10 +6,17 @@ import ExpenseProgressHeader from "./components/ExpenseProgressHeader";
 import { TabsContent } from "@/components/ui/tabs";
 import Settings from "../settings";
 import Analytics from "./analytics";
+import {
+  lastSevenDays,
+  type DaysListItem,
+} from "./components/ExpenseRecordsFilter";
 
 const Home = () => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [updateId, setUpdateId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<DaysListItem>(
+    lastSevenDays[0]
+  );
 
   return (
     <AppLayout>
@@ -19,6 +26,7 @@ const Home = () => {
           setIsDialogOpen={setIsDialogOpen}
           setUpdateId={setUpdateId}
           updateId={updateId}
+          selectedDate={selectedDate}
         />
         <TabsContent value="home" className="w-full">
           <div className="my-2 flex flex-col items-center gap-4">
@@ -28,6 +36,8 @@ const Home = () => {
               setIsDialogOpen={setIsDialogOpen}
               setUpdateId={setUpdateId}
               updateId={updateId}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
             />
           </div>
         </TabsContent>

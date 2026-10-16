@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import type { DaysListItem } from "./ExpenseRecordsFilter";
 
 const expenseRecordForm = z.object({
   amount: z.string(),
@@ -26,10 +27,24 @@ type CreateUpdateExpenseModalProps = {
   setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   updateId: string | null;
   setUpdateId: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedDate: DaysListItem;
+};
+
+const buildDatetimeForSelectedDay = (selected: DaysListItem): string => {
+  const now = new Date();
+  const base = new Date(selected.date);
+  base.setHours(
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds(),
+    now.getMilliseconds()
+  );
+  return base.toISOString();
 };
 
 const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
-  const { isDialogOpen, setIsDialogOpen, setUpdateId, updateId } = props;
+  const { isDialogOpen, setIsDialogOpen, setUpdateId, updateId, selectedDate } =
+    props;
   const { addExpense, updateExpense, getExpenseRecord } = useExpenseStore();
 
   const form = useForm<ExpenseRecordForm>({
@@ -59,7 +74,11 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
         });
         setUpdateId(null);
       } else {
-        addExpense(Number(data.amount), data.discretion);
+        addExpense(
+          Number(data.amount),
+          data.discretion,
+          buildDatetimeForSelectedDay(selectedDate)
+        );
       }
       form.reset();
       setIsDialogOpen(false);

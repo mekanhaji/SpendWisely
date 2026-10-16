@@ -9,6 +9,7 @@ import { ChevronsUpDownIcon } from "lucide-react";
 export type DaysListItem = {
   value: string;
   label: string;
+  date: Date;
 };
 
 export type ExpenseRecordsFilterProps = {
@@ -34,6 +35,7 @@ export const lastSevenDays: DaysListItem[] = Array.from(
     return {
       value: date.toLocaleDateString("en-IN"),
       label,
+      date,
     };
   }
 );

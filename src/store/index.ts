@@ -37,9 +37,11 @@ export type ExpenseStore = {
    * Add expense to the total expense
    *
    * @param expense
+   * @param discretion
+   * @param datetime - ISO string; defaults to now. Used to record expense on filter-selected day.
    * @returns
    */
-  addExpense: (expense: number, discretion?: string) => void;
+  addExpense: (expense: number, discretion?: string, datetime?: string) => void;
   /**
    * Update the total expense
    *
@@ -59,9 +61,10 @@ export type ExpenseStore = {
 const createExpenseRecord = (
   amount: number,
   discretion: string,
+  datetime?: string,
 ): ExpenseRecord => {
   return {
-    datetime: new Date().toISOString(),
+    datetime: datetime ?? new Date().toISOString(),
     amount,
     discretion,
   };
@@ -75,11 +78,12 @@ const useExpenseStore = create(
       setCurrentExpense: (expense) => set({ currentExpense: expense }),
       getExpenseRecord: (timestamp) =>
         get().expenseRecords.find((record) => record.datetime === timestamp),
-      addExpense: (expense, discretion) =>
+      addExpense: (expense, discretion, datetime) =>
         set(() => {
           const expenseRecord = createExpenseRecord(
             expense,
             discretion || "Expense",
+            datetime,
           );
           return {
             expenseRecords: [...get().expenseRecords, expenseRecord],

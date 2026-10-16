@@ -1,10 +1,9 @@
 import ItemCardLayout from "@/layout/ItemCardLayout";
 import { useExpenseStore, useUserSettingsStore } from "@/store";
 import { Clock12Icon, Pencil, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import ExpenseRecordsFilter, {
-  DaysListItem,
-  lastSevenDays,
+  type DaysListItem,
 } from "./ExpenseRecordsFilter";
 
 const formatDateTime = (datetime: string) => {
@@ -20,10 +19,13 @@ type ExpenseRecordsListProps = {
   setIsDialogOpen: (isOpen: boolean) => void;
   setUpdateId: (id: string | null) => void;
   updateId: string | null;
+  selectedDate: DaysListItem;
+  setSelectedDate: (date: DaysListItem) => void;
 };
 
 const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
-  const { setIsDialogOpen, setUpdateId, updateId } = props;
+  const { setIsDialogOpen, setUpdateId, updateId, selectedDate, setSelectedDate } =
+    props;
   const {
     expenseRecords,
 
@@ -31,9 +33,6 @@ const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
     setCurrentExpense,
   } = useExpenseStore();
   const currency = useUserSettingsStore((state) => state.currency);
-  const [selectedDate, setSelectedDate] = useState<DaysListItem>(
-    lastSevenDays[0]
-  );
 
   const expenseRecordsMemoized = useMemo(() => {
     // get all the expense records of today
