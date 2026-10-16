@@ -1,13 +1,17 @@
 import ItemCardLayout from "@/layout/ItemCardLayout";
 import { useExpenseStore, useUserSettingsStore } from "@/store";
 import { Clock12Icon, Pencil, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import ExpenseRecordsFilter, {
-  DaysListItem,
-  lastSevenDays,
+  endOfDay,
+  getFirstOfThisMonth,
+  getMondayOfThisWeek,
+  parseLocalISODate,
+  startOfDay,
+  type ExpenseFilter,
 } from "./ExpenseRecordsFilter";
 
-const formatDateTime = (datetime: string) => {
+const formatTime = (datetime: string) => {
   const date = new Date(datetime);
   return date.toLocaleString("en-IN", {
     hour: "numeric",
@@ -16,48 +20,104 @@ const formatDateTime = (datetime: string) => {
   });
 };
 
+const formatDateTime = (datetime: string) => {
+  const date = new Date(datetime);
+  return date.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  });
+};
+
+const matchesFilter = (datetime: string, filter: ExpenseFilter): boolean => {
+  const recordDate = new Date(datetime);
+  const today = new Date();
+
+  switch (filter.mode) {
+    case "all":
+      return true;
+    case "today":
+      return (
+        recordDate.toLocaleDateString("en-IN") ===
+        today.toLocaleDateString("en-IN")
+      );
+    case "yesterday": {
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      return (
+        recordDate.toLocaleDateString("en-IN") ===
+        yesterday.toLocaleDateString("en-IN")
+      );
+    }
+    case "week": {
+      const monday = getMondayOfThisWeek(today);
+      return recordDate >= monday;
+    }
+    case "month": {
+      const first = getFirstOfThisMonth(today);
+      return recordDate >= first;
+    }
+    case "custom": {
+      const from = filter.from ? parseLocalISODate(filter.from) : null;
+      const to = filter.to ? parseLocalISODate(filter.to) : null;
+      if (!from && !to) return true;
+      if (from && !to) {
+        return (
+          recordDate >= startOfDay(from) && recordDate <= endOfDay(from)
+        );
+      }
+      if (!from && to) {
+        return recordDate >= startOfDay(to) && recordDate <= endOfDay(to);
+      }
+      // both present (from/to are Date here)
+      let start = startOfDay(from!);
+      let end = endOfDay(to!);
+      if (start > end) {
+        start = startOfDay(to!);
+        end = endOfDay(from!);
+      }
+      return recordDate >= start && recordDate <= end;
+    }
+  }
+};
+
 type ExpenseRecordsListProps = {
   setIsDialogOpen: (isOpen: boolean) => void;
   setUpdateId: (id: string | null) => void;
   updateId: string | null;
+  filter: ExpenseFilter;
+  setFilter: (filter: ExpenseFilter) => void;
 };
 
 const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
-  const { setIsDialogOpen, setUpdateId, updateId } = props;
-  const {
-    expenseRecords,
-
-    removeExpense,
-    setCurrentExpense,
-  } = useExpenseStore();
+  const { setIsDialogOpen, setUpdateId, updateId, filter, setFilter } = props;
+  const { expenseRecords, removeExpense, setCurrentExpense } = useExpenseStore();
   const currency = useUserSettingsStore((state) => state.currency);
-  const [selectedDate, setSelectedDate] = useState<DaysListItem>(
-    lastSevenDays[0]
-  );
+
+  const showDate =
+    filter.mode === "all" ||
+    filter.mode === "week" ||
+    filter.mode === "month" ||
+    filter.mode === "custom";
 
   const expenseRecordsMemoized = useMemo(() => {
-    // get all the expense records of today
-    const todaysExpenseRecords = expenseRecords
-      .filter((record) => {
-        const was = new Date(record.datetime).toLocaleDateString("en-IN");
-        return was === selectedDate.value;
-      })
-      .reverse();
+    const filtered = expenseRecords.filter((record) =>
+      matchesFilter(record.datetime, filter)
+    ).reverse();
 
     // update the current expense
     setCurrentExpense(
-      todaysExpenseRecords.reduce((acc, record) => acc + record.amount, 0)
+      filtered.reduce((acc, record) => acc + record.amount, 0)
     );
 
-    return todaysExpenseRecords;
-  }, [expenseRecords, updateId, selectedDate]);
+    return filtered;
+  }, [expenseRecords, updateId, filter]);
 
   return (
     <>
-      <ExpenseRecordsFilter
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-      />
+      <ExpenseRecordsFilter filter={filter} setFilter={setFilter} />
       {expenseRecordsMemoized.map((record) => (
         <ItemCardLayout key={record.datetime} className="w-full">
           <div className="flex flex-col justify-between">
@@ -79,7 +139,7 @@ const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
             </div>
             <span className="flex items-center gap-2 uppercase">
               <Clock12Icon className="h-4 w-4" />{" "}
-              {formatDateTime(record.datetime)}
+              {showDate ? formatDateTime(record.datetime) : formatTime(record.datetime)}
             </span>
           </div>
           <h1 className="text-4xl">
