@@ -7,12 +7,19 @@ import ItemCardLayout, {
   ItemCardHeaderTitle,
 } from "@/layout/ItemCardLayout";
 import { useUserSettingsStore } from "@/store";
+import InstallAppBanner from "./components/InstallAppBanner";
 
-const Settings = () => {
+type SettingsProps = {
+  showInstallBanner?: boolean;
+};
+
+const Settings = ({ showInstallBanner = false }: SettingsProps) => {
   const userSettings = useUserSettingsStore();
 
   return (
     <main className="flex flex-col gap-2 mt-2">
+      {showInstallBanner && <InstallAppBanner />}
+
       <ItemCardLayout>
         <ItemCardHeader>
           <ItemCardHeaderTitle>Dark Theme</ItemCardHeaderTitle>

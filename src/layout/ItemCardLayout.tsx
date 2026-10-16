@@ -1,8 +1,7 @@
 import { cn } from "@/lib/utils";
 
-type ItemCardProps = {
+type ItemCardProps = React.HTMLAttributes<HTMLDivElement> & {
   children: React.ReactNode;
-  className?: string;
 };
 
 type ItemCardHeaderProps = {
@@ -25,13 +24,14 @@ type ItemCardBodyProps = {
   className?: string;
 };
 
-const ItemCardLayout = ({ children, className }: ItemCardProps) => {
+const ItemCardLayout = ({ children, className, ...props }: ItemCardProps) => {
   return (
     <div
       className={cn(
         "bg-app-100 dark:bg-app-800 flex justify-between p-2 items-center rounded-lg",
-        className
+        className,
       )}
+      {...props}
     >
       {children}
     </div>

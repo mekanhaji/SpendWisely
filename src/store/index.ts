@@ -1,6 +1,15 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+export type BeforeInstallPromptEvent = Event & {
+  readonly platforms: string[];
+  prompt: () => Promise<void>;
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+};
+
 export type ExpenseRecord = {
   datetime: string;
   amount: number;
@@ -49,7 +58,7 @@ export type ExpenseStore = {
 
 const createExpenseRecord = (
   amount: number,
-  discretion: string
+  discretion: string,
 ): ExpenseRecord => {
   return {
     datetime: new Date().toISOString(),
@@ -70,7 +79,7 @@ const useExpenseStore = create(
         set(() => {
           const expenseRecord = createExpenseRecord(
             expense,
-            discretion || "Expense"
+            discretion || "Expense",
           );
           return {
             expenseRecords: [...get().expenseRecords, expenseRecord],
@@ -79,7 +88,7 @@ const useExpenseStore = create(
       updateExpense: (timestamp, record) =>
         set((state) => {
           const index = state.expenseRecords.findIndex(
-            (record) => record.datetime === timestamp
+            (record) => record.datetime === timestamp,
           );
           if (index !== -1) {
             state.expenseRecords[index] = record;
@@ -89,7 +98,7 @@ const useExpenseStore = create(
       removeExpense: (timestamp) => {
         set((state) => {
           const index = state.expenseRecords.findIndex(
-            (record) => record.datetime === timestamp
+            (record) => record.datetime === timestamp,
           );
           if (index !== -1) {
             const updatedRecords = [...state.expenseRecords];
@@ -105,8 +114,8 @@ const useExpenseStore = create(
     {
       name: "expense-store",
       storage: createJSONStorage(() => localStorage),
-    }
-  )
+    },
+  ),
 );
 // -----------------------------------------------------------------
 
@@ -140,8 +149,62 @@ const useUserSettingsStore = create(
     {
       name: "user-settings",
       storage: createJSONStorage(() => localStorage),
-    }
-  )
+    },
+  ),
 );
 
-export { useExpenseStore, useUserSettingsStore };
+export type PwaInstallStatus =
+  | "idle"
+  | "available"
+  | "unsupported"
+  | "installed"
+  | "dismissed";
+
+export type PwaInstallStore = {
+  installPrompt: BeforeInstallPromptEvent | null;
+  installStatus: PwaInstallStatus;
+  setInstallPrompt: (event: BeforeInstallPromptEvent | null) => void;
+  markInstallAvailable: (event: BeforeInstallPromptEvent) => void;
+  markInstallUnsupported: () => void;
+  markInstalled: () => void;
+  markInstallDismissed: () => void;
+  clearInstallPrompt: () => void;
+  promptInstall: () => Promise<void>;
+};
+
+const usePwaInstallStore = create<PwaInstallStore>((set, get) => ({
+  installPrompt: null,
+  installStatus: "idle",
+  setInstallPrompt: (event) => set({ installPrompt: event }),
+  markInstallAvailable: (event) =>
+    set({ installPrompt: event, installStatus: "available" }),
+  markInstallUnsupported: () =>
+    set((state) =>
+      state.installStatus === "installed"
+        ? state
+        : { installPrompt: null, installStatus: "unsupported" },
+    ),
+  markInstalled: () => set({ installPrompt: null, installStatus: "installed" }),
+  markInstallDismissed: () =>
+    set({ installPrompt: null, installStatus: "dismissed" }),
+  clearInstallPrompt: () => set({ installPrompt: null }),
+  promptInstall: async () => {
+    const deferredPrompt = get().installPrompt;
+
+    if (!deferredPrompt) {
+      return;
+    }
+
+    await deferredPrompt.prompt();
+
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      set({ installPrompt: null, installStatus: "installed" });
+      return;
+    }
+
+    set({ installPrompt: null, installStatus: "dismissed" });
+  },
+}));
+
+export { useExpenseStore, usePwaInstallStore, useUserSettingsStore };
