@@ -30,6 +30,14 @@ type CreateUpdateExpenseModalProps = {
   selectedDate: DaysListItem;
 };
 
+const getCreateTitle = (selected: DaysListItem): string => {
+  if (selected.label === "Today") return "How much did you spend this time?";
+  if (selected.label === "Yesterday")
+    return "Forgot to record yesterday's spend?";
+  const day = selected.label.charAt(0).toLowerCase() + selected.label.slice(1);
+  return `Forgot to record ${day}'s spend?`;
+};
+
 const buildDatetimeForSelectedDay = (selected: DaysListItem): string => {
   const now = new Date();
   const base = new Date(selected.date);
@@ -52,7 +60,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
   });
 
   useEffect(() => {
-    if (updateId) {
+    if (updateId && isDialogOpen) {
       const record = getExpenseRecord(updateId);
       if (record) {
         form.setValue("amount", String(record.amount));
@@ -60,8 +68,18 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
       } else {
         setUpdateId(null);
       }
+    } else if (!updateId && isDialogOpen) {
+      form.reset();
     }
-  }, [updateId]);
+  }, [updateId, isDialogOpen]);
+
+  const handleOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setUpdateId(null);
+      form.reset();
+    }
+  };
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
@@ -88,18 +106,33 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
   });
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger
         className="p-4 rounded-full bg-app-500 text-white flex gap-1 items-center w-fit fixed bottom-8 left-1/2 transform -translate-x-1/2"
         title="Add Expense"
+        onClick={() => {
+          setUpdateId(null);
+          form.reset();
+        }}
       >
         <Plus className="h-6 w-6" />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>How much did you spend this time?</DialogTitle>
+          <DialogTitle>
+            {updateId ? "Update your expense" : getCreateTitle(selectedDate)}
+          </DialogTitle>
           <DialogDescription>
-            Enter the details of your spending
+            {updateId ? (
+              "Edit the details of your spending"
+            ) : (
+              <>
+                Recording expense for{" "}
+                <span className="font-medium text-foreground">
+                  {selectedDate.label} • {selectedDate.value}
+                </span>
+              </>
+            )}
           </DialogDescription>
           <form className="flex flex-col items-center" onSubmit={onSubmit}>
             <div className="flex flex-col w-full">
