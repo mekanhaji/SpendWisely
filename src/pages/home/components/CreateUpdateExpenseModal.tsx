@@ -13,7 +13,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
-import type { DaysListItem } from "./ExpenseRecordsFilter";
+import {
+  getFirstOfThisMonth,
+  getMondayOfThisWeek,
+  parseLocalISODate,
+  type ExpenseFilter,
+} from "./ExpenseRecordsFilter";
 
 const expenseRecordForm = z.object({
   amount: z.string(),
@@ -27,20 +32,101 @@ type CreateUpdateExpenseModalProps = {
   setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   updateId: string | null;
   setUpdateId: React.Dispatch<React.SetStateAction<string | null>>;
-  selectedDate: DaysListItem;
+  filter: ExpenseFilter;
 };
 
-const getCreateTitle = (selected: DaysListItem): string => {
-  if (selected.label === "Today") return "How much did you spend this time?";
-  if (selected.label === "Yesterday")
-    return "Forgot to record yesterday's spend?";
-  const day = selected.label.charAt(0).toLowerCase() + selected.label.slice(1);
-  return `Forgot to record ${day}'s spend?`;
+const getCreateTargetDate = (filter: ExpenseFilter): Date => {
+  const today = new Date();
+  switch (filter.mode) {
+    case "yesterday": {
+      const y = new Date();
+      y.setDate(today.getDate() - 1);
+      return y;
+    }
+    case "custom": {
+      // Single past day (from == to) or range -> use `to` so the new
+      // record is visible inside the selected range.
+      const to = filter.to ? parseLocalISODate(filter.to) : null;
+      if (to) return to;
+      const from = filter.from ? parseLocalISODate(filter.from) : null;
+      if (from) return from;
+      return today;
+    }
+    case "all":
+    case "today":
+    case "week":
+    case "month":
+    default:
+      return today;
+  }
 };
 
-const buildDatetimeForSelectedDay = (selected: DaysListItem): string => {
+const formatShortDate = (d: Date): string =>
+  d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+
+const getCreateTitle = (filter: ExpenseFilter): string => {
+  switch (filter.mode) {
+    case "today":
+    case "all":
+      return "How much did you spend this time?";
+    case "yesterday":
+      return "Forgot to record yesterday's spend?";
+    case "week":
+      return "Add to this week's spends?";
+    case "month":
+      return "Add to this month's spends?";
+    case "custom": {
+      if (filter.from && filter.to && filter.from === filter.to) {
+        const d = parseLocalISODate(filter.to);
+        if (d) return `Forgot to record ${formatShortDate(d)}'s spend?`;
+      }
+      if (filter.from && filter.to) return "Add spend to this range?";
+      return "How much did you spend this time?";
+    }
+  }
+};
+
+const getCreateDescription = (filter: ExpenseFilter): string => {
+  const today = new Date();
+  switch (filter.mode) {
+    case "today":
+      return `Today • ${today.toLocaleDateString("en-IN")}`;
+    case "yesterday": {
+      const y = new Date();
+      y.setDate(today.getDate() - 1);
+      return `Yesterday • ${y.toLocaleDateString("en-IN")}`;
+    }
+    case "all":
+      return "All Spends";
+    case "week": {
+      const monday = getMondayOfThisWeek(today);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      return `This Week • ${formatShortDate(monday)} - ${formatShortDate(sunday)}`;
+    }
+    case "month": {
+      const first = getFirstOfThisMonth(today);
+      return `This Month • ${first.toLocaleDateString("en-IN", { month: "short", year: "numeric" })}`;
+    }
+    case "custom": {
+      if (filter.from && filter.to && filter.from === filter.to) {
+        const d = parseLocalISODate(filter.to);
+        if (d) return `${d.toLocaleDateString("en-IN")}`;
+      }
+      if (filter.from && filter.to) {
+        const from = parseLocalISODate(filter.from);
+        const to = parseLocalISODate(filter.to);
+        if (from && to)
+          return `${from.toLocaleDateString("en-IN")} - ${to.toLocaleDateString("en-IN")}`;
+      }
+      return "Custom range";
+    }
+  }
+};
+
+const buildDatetimeForFilter = (filter: ExpenseFilter): string => {
   const now = new Date();
-  const base = new Date(selected.date);
+  const base = getCreateTargetDate(filter);
   base.setHours(
     now.getHours(),
     now.getMinutes(),
@@ -51,7 +137,7 @@ const buildDatetimeForSelectedDay = (selected: DaysListItem): string => {
 };
 
 const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
-  const { isDialogOpen, setIsDialogOpen, setUpdateId, updateId, selectedDate } =
+  const { isDialogOpen, setIsDialogOpen, setUpdateId, updateId, filter } =
     props;
   const { addExpense, updateExpense, getExpenseRecord } = useExpenseStore();
 
@@ -95,7 +181,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
         addExpense(
           Number(data.amount),
           data.discretion,
-          buildDatetimeForSelectedDay(selectedDate)
+          buildDatetimeForFilter(filter)
         );
       }
       form.reset();
@@ -120,7 +206,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {updateId ? "Update your expense" : getCreateTitle(selectedDate)}
+            {updateId ? "Update your expense" : getCreateTitle(filter)}
           </DialogTitle>
           <DialogDescription>
             {updateId ? (
@@ -129,7 +215,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
               <>
                 Recording expense for{" "}
                 <span className="font-medium text-foreground">
-                  {selectedDate.label} • {selectedDate.value}
+                  {getCreateDescription(filter)}
                 </span>
               </>
             )}
