@@ -1,6 +1,4 @@
-import { cn } from "@/lib/utils";
-import { ChevronLeft, Settings2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type HeaderProps = {
   /**
@@ -36,26 +34,21 @@ type AppLayoutProps = {
 };
 
 const Header = (props: HeaderProps) => {
-  const {
-    title = "Spend Wisely",
-    back = false,
-    showSettingsIcon = true,
-  } = props;
-  const navigator = useNavigate();
+  const { title = "Spend Wisely" } = props;
   return (
-    <div className="flex justify-between items-center">
-      {Boolean(back) && (
+    <div className="flex justify-center items-center my-4">
+      {/* {Boolean(back) && (
         <ChevronLeft
           className="text-3xl mx-2 cursor-pointer select-none"
           onClick={() =>
             typeof back === "string" ? navigator(back) : navigator(-1)
           }
         />
-      )}
-      <h1 className="text-2xl font-bold flex items-center cursor-default select-none">
+      )} */}
+      <h1 className="text-3xl font-bold flex items-center cursor-default select-none">
         {title}
       </h1>
-      <span
+      {/* <span
         className={cn("text-2xl cursor-pointer", {
           invisible: !showSettingsIcon,
         })}
@@ -63,8 +56,24 @@ const Header = (props: HeaderProps) => {
         onClick={() => navigator("/settings")}
       >
         <Settings2 />
-      </span>
+      </span> */}
     </div>
+  );
+};
+
+const Nav = () => {
+  return (
+    <TabsList className="w-full justify-around">
+      <TabsTrigger value="home" className="w-full">
+        Home
+      </TabsTrigger>
+      <TabsTrigger value="analytics" className="w-full">
+        Analytics
+      </TabsTrigger>
+      <TabsTrigger value="settings" className="w-full">
+        Settings
+      </TabsTrigger>
+    </TabsList>
   );
 };
 
@@ -72,7 +81,10 @@ const AppLayout = ({ children, headerOptions }: AppLayoutProps) => {
   return (
     <div className="mx-auto max-w-[625px] mt-2 px-4">
       <Header {...headerOptions} />
-      <div>{children}</div>
+      <Tabs defaultValue="home">
+        <Nav />
+        {children}
+      </Tabs>
     </div>
   );
 };

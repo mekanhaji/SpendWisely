@@ -32,5 +32,22 @@
   ],
   "theme_color": "#2FE9F1",
   "background_color": "#2FE9F1",
-  "display": "standalone"
+  "display": "standalone",
+  "description": "Track daily spending against your limit with warnings before you overshoot.",
+  "screenshots": [
+    {
+      "src": "screenshots/narrow-1.jpg",
+      "sizes": "1080x2204",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Spend Wisely - Daily expenses"
+    },
+    {
+      "src": "screenshots/wide-1.jpg",
+      "sizes": "1280x800",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Spend Wisely - Daily expenses"
+    }
+  ]
 }
