@@ -195,15 +195,19 @@ const usePwaInstallStore = create<PwaInstallStore>((set, get) => ({
       return;
     }
 
-    await deferredPrompt.prompt();
+    // Cleared up front so a rapid second tap cannot reuse the same prompt.
+    set({ installPrompt: null });
 
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      set({ installPrompt: null, installStatus: "installed" });
-      return;
+    try {
+      await deferredPrompt.prompt();
+
+      const { outcome } = await deferredPrompt.userChoice;
+      set({
+        installStatus: outcome === "accepted" ? "installed" : "dismissed",
+      });
+    } catch {
+      set({ installPrompt: deferredPrompt, installStatus: "available" });
     }
-
-    set({ installPrompt: null, installStatus: "dismissed" });
   },
 }));
 

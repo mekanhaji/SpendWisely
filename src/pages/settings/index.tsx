@@ -9,16 +9,12 @@ import ItemCardLayout, {
 import { useUserSettingsStore } from "@/store";
 import InstallAppBanner from "./components/InstallAppBanner";
 
-type SettingsProps = {
-  showInstallBanner?: boolean;
-};
-
-const Settings = ({ showInstallBanner = false }: SettingsProps) => {
+const Settings = () => {
   const userSettings = useUserSettingsStore();
 
   return (
     <main className="flex flex-col gap-2 mt-2">
-      {showInstallBanner && <InstallAppBanner />}
+      <InstallAppBanner />
 
       <ItemCardLayout>
         <ItemCardHeader>
