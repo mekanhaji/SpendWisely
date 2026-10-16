@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { createHashRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Home from "./pages/home";
 import Settings from "./pages/settings";
 import { useUserSettingsStore } from "./store";
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     path: "/*",
     element: <Home />,

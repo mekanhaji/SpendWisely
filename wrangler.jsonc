@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "spend-wisely",
+  // Static SPA: no Worker script, assets are served directly from ./dist.
+  "compatibility_date": "2026-10-16",
+  "assets": {
+    "directory": "./dist",
+    // Serve index.html for unknown paths so client-side routes work on refresh.
+    "not_found_handling": "single-page-application"
+  }
+}
