@@ -1,4 +1,19 @@
+import { useLocation, useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+/** Route each nav tab lives on, so the URL decides which one is active. */
+export const TAB_PATHS = {
+  home: "/",
+  analytics: "/analytics",
+  settings: "/settings",
+} as const;
+
+type TabValue = keyof typeof TAB_PATHS;
+
+const TAB_VALUES = Object.keys(TAB_PATHS) as TabValue[];
+
+const tabFromPath = (pathname: string): TabValue =>
+  TAB_VALUES.find((tab) => TAB_PATHS[tab] === pathname) ?? "home";
 
 type HeaderProps = {
   /**
@@ -78,10 +93,19 @@ const Nav = () => {
 };
 
 const AppLayout = ({ children, headerOptions }: AppLayoutProps) => {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+
   return (
     <div className="mx-auto max-w-[625px] mt-2 px-4">
       <Header {...headerOptions} />
-      <Tabs defaultValue="home">
+      <Tabs
+        value={tabFromPath(pathname)}
+        onValueChange={(value) => {
+          const path = TAB_PATHS[value as TabValue];
+          if (path) navigate(path);
+        }}
+      >
         <Nav />
         {children}
       </Tabs>
