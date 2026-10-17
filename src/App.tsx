@@ -1,7 +1,11 @@
 import { useEffect } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import Home from "./pages/home";
-import Settings from "./pages/settings";
+import { TAB_PATHS } from "./layout";
 import {
   type BeforeInstallPromptEvent,
   usePwaInstallStore,
@@ -10,11 +14,15 @@ import {
 
 const router = createBrowserRouter([
   {
-    path: "/*",
+    path: TAB_PATHS.home,
     element: <Home />,
   },
   {
-    path: "/",
+    path: TAB_PATHS.analytics,
+    element: <Home />,
+  },
+  {
+    path: TAB_PATHS.settings,
     element: <Home />,
   },
   {
@@ -22,8 +30,8 @@ const router = createBrowserRouter([
     element: <div>About page</div>,
   },
   {
-    path: "/settings",
-    element: <Settings />,
+    path: "*",
+    element: <Navigate to="/" replace />,
   },
 ]);
 
