@@ -2,79 +2,129 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: "Cascadia Code", monospace;
-  background: linear-gradient(
-    109.6deg,
-    rgb(245, 239, 249) 30.1%,
-    rgb(207, 211, 236) 100.2%
-  );
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  height: 99vh;
-}
-body.dark {
-  background: linear-gradient(
-    109.6deg,
-    rgb(0, 0, 0) 30.1%,
-    rgb(0, 0, 0) 100.2%
-  );
-}
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    color-scheme: light;
+
+    /* Surfaces */
+    --background: 45 29% 95%;
+    --foreground: 90 7% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 90 7% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 90 7% 16%;
+
+    /* Brand */
+    --primary: 98 14% 36%;
+    --primary-foreground: 45 29% 95%;
+
+    /* Neutrals */
+    --secondary: 45 22% 89%;
+    --secondary-foreground: 90 7% 16%;
+    --muted: 45 22% 89%;
+    --muted-foreground: 73 5% 39%;
+
+    /* Hover / selected surface. This is not the clay accent. */
+    --accent: 45 22% 89%;
+    --accent-foreground: 90 7% 16%;
+
+    --destructive: 12 47% 36%;
+    --destructive-foreground: 45 29% 95%;
+
+    --border: 44 15% 81%;
+    --input: 44 15% 81%;
+    --ring: 98 14% 36%;
+
+    /* Secondary brand (clay). Nothing consumes this yet. */
+    --brand: 167 115 100;
+
     --radius: 0.5rem;
+
+    /* App ramps. Stored as "r g b" channels so the opacity modifier keeps
+       working, e.g. bg-app-200/80. Values flip per theme, which is why
+       app-500 is light sage in dark mode: as a fixed hex it measured
+       2.02:1 against the dark card and failed WCAG 1.4.11. */
+    --app-100: 228 234 225;
+    --app-200: 212 222 206;
+    --app-500: 88 104 79;
+    --app-700: 64 76 57;
+    --app-800: 50 57 45;
+    --app-950: 27 31 25;
+    --app-foreground: 64 76 57;
+
+    --app-warning-100: 245 232 214;
+    --app-warning-200: 239 217 190;
+    --app-warning-500: 149 99 35;
+    --app-warning-700: 98 71 34;
+    --app-warning-800: 68 53 34;
+    --app-warning-950: 36 29 20;
+
+    --app-error-100: 241 222 218;
+    --app-error-200: 234 202 195;
+    --app-error-500: 135 66 49;
+    --app-error-700: 94 50 38;
+    --app-error-800: 69 40 33;
+    --app-error-950: 37 23 19;
   }
+
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    color-scheme: dark;
+
+    /* Surfaces */
+    --background: 100 6% 10%;
+    --foreground: 53 21% 93%;
+    --card: 96 7% 14%;
+    --card-foreground: 53 21% 93%;
+    --popover: 96 7% 14%;
+    --popover-foreground: 53 21% 93%;
+
+    /* Brand */
+    --primary: 85 13% 65%;
+    --primary-foreground: 100 6% 10%;
+
+    /* Neutrals */
+    --secondary: 94 8% 18%;
+    --secondary-foreground: 53 21% 93%;
+    --muted: 94 8% 18%;
+    --muted-foreground: 65 7% 70%;
+
+    /* Hover / selected surface. This is not the clay accent. */
+    --accent: 94 8% 18%;
+    --accent-foreground: 53 21% 93%;
+
+    --destructive: 14 52% 66%;
+    --destructive-foreground: 100 6% 10%;
+
+    --border: 93 7% 26%;
+    --input: 93 7% 26%;
+    --ring: 85 13% 65%;
+
+    /* Secondary brand (clay). Nothing consumes this yet. */
+    --brand: 208 154 137;
+
+    /* App ramps. The scale is not monotonic here: components use 700 as a
+       text/icon colour and 800 as a surface, so 700 lands well above 800. */
+    --app-100: 44 51 40;
+    --app-200: 57 66 52;
+    --app-500: 168 177 154;
+    --app-700: 190 197 180;
+    --app-800: 50 57 45;
+    --app-950: 35 40 31;
+    --app-foreground: 35 40 31;
+
+    --app-warning-100: 64 53 38;
+    --app-warning-200: 78 63 44;
+    --app-warning-500: 226 180 101;
+    --app-warning-700: 232 200 146;
+    --app-warning-800: 56 47 36;
+    --app-warning-950: 40 34 27;
+
+    --app-error-100: 63 44 39;
+    --app-error-200: 77 52 45;
+    --app-error-500: 213 144 123;
+    --app-error-700: 222 171 156;
+    --app-error-800: 56 40 36;
+    --app-error-950: 40 29 27;
   }
 }
 
@@ -84,6 +134,11 @@ body.dark {
     -webkit-appearance: none;
     margin: 0;
   }
+}
+
+body {
+  font-family: "Cascadia Code", monospace;
+  min-height: 100dvh;
 }
 
 @layer base {

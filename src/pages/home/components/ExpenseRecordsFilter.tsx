@@ -83,7 +83,7 @@ const pillClass = (active: boolean) =>
   cn(
     "h-9 px-3 rounded-full border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
     active
-      ? "bg-app-500 text-white border-app-500 shadow-sm"
+      ? "bg-primary text-primary-foreground border-primary shadow-sm"
       : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
   );
 
@@ -269,7 +269,7 @@ const ExpenseRecordsFilter = (props: ExpenseRecordsFilterProps) => {
                 type="button"
                 onClick={applyCustom}
                 disabled={!draftFrom || !draftTo || !!rangeError}
-                className="h-9 px-4 rounded-md bg-app-500 text-white text-sm font-medium disabled:opacity-50"
+                className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
               >
                 Apply
               </button>

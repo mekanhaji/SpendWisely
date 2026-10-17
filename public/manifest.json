@@ -30,8 +30,8 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#2FE9F1",
-  "background_color": "#2FE9F1",
+  "theme_color": "#F5F3ED",
+  "background_color": "#F5F3ED",
   "display": "standalone",
   "description": "Track daily spending against your limit with warnings before you overshoot.",
   "screenshots": [

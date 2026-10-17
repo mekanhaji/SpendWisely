@@ -49,7 +49,7 @@ const Analytics = (props: AnalyticsProps) => {
               <h2 className="text-2xl">{record.discretion}</h2>
               <div className="flex gap-3">
                 <Pencil
-                  className="h-4 w-4 text-app-700 dark:text-app-950 cursor-pointer"
+                  className="h-4 w-4 text-app-700 cursor-pointer"
                   onClick={() => {
                     setUpdateId(record.datetime);
                     setIsDialogOpen(true);

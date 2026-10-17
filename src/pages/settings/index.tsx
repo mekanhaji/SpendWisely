@@ -1,13 +1,25 @@
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import ItemCardLayout, {
   ItemCardBody,
   ItemCardHeader,
   ItemCardHeaderDescription,
   ItemCardHeaderTitle,
 } from "@/layout/ItemCardLayout";
-import { useUserSettingsStore } from "@/store";
+import { cn } from "@/lib/utils";
+import { type ThemePreference, useUserSettingsStore } from "@/store";
 import InstallAppBanner from "./components/InstallAppBanner";
+
+const themeOptions: { value: ThemePreference; label: string }[] = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "system", label: "System" },
+];
+
+const themeDescription: Record<ThemePreference, string> = {
+  light: "Don't Burn your eyes, enable dark mode 🌚",
+  dark: "Let's see the light, disable the dark mode 🌞",
+  system: "Following your device, and switching along with it 🖥️",
+};
 
 const Settings = () => {
   const userSettings = useUserSettingsStore();
@@ -18,18 +30,34 @@ const Settings = () => {
 
       <ItemCardLayout>
         <ItemCardHeader>
-          <ItemCardHeaderTitle>Dark Theme</ItemCardHeaderTitle>
+          <ItemCardHeaderTitle>Theme</ItemCardHeaderTitle>
           <ItemCardHeaderDescription>
-            {userSettings.theme === "dark"
-              ? "Let's see the light, disable the dark mode 🌞"
-              : "Don't Burn your eyes, enable dark mode 🌚"}
+            {themeDescription[userSettings.theme]}
           </ItemCardHeaderDescription>
         </ItemCardHeader>
         <ItemCardBody>
-          <Switch
-            checked={userSettings.theme === "dark"}
-            onCheckedChange={() => userSettings.toggleTheme()}
-          />
+          <div
+            role="group"
+            aria-label="Theme"
+            className="flex overflow-hidden rounded-lg border border-border"
+          >
+            {themeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={userSettings.theme === option.value}
+                onClick={() => userSettings.setTheme(option.value)}
+                className={cn("px-3 py-1 text-sm transition-colors", {
+                  "bg-primary text-primary-foreground":
+                    userSettings.theme === option.value,
+                  "text-muted-foreground hover:bg-accent hover:text-accent-foreground":
+                    userSettings.theme !== option.value,
+                })}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </ItemCardBody>
       </ItemCardLayout>
 

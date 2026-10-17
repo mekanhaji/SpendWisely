@@ -194,7 +194,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger
-        className="p-4 rounded-full bg-app-500 text-white flex gap-1 items-center w-fit fixed bottom-8 left-1/2 transform -translate-x-1/2"
+        className="p-4 rounded-full bg-primary text-primary-foreground flex gap-1 items-center w-fit fixed bottom-8 left-1/2 transform -translate-x-1/2"
         title="Add Expense"
         onClick={() => {
           setUpdateId(null);
@@ -227,7 +227,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
                 type="number"
                 {...form.register("amount")}
                 placeholder={"e.g. 10"}
-                className="p-2 my-2 border border-gray-300 rounded-md"
+                className="p-2 my-2 border border-input rounded-md"
               />
               {form.formState.errors.amount && (
                 <p className="text-app-error-500 text-sm">
@@ -242,7 +242,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
                 type="text"
                 {...form.register("discretion")}
                 placeholder={"e.g. Lunch"}
-                className="p-2 my-2 border border-gray-300 rounded-md"
+                className="p-2 my-2 border border-input rounded-md"
               />
               {form.formState.errors.amount && (
                 <p className="text-app-error-500 text-sm">
@@ -251,7 +251,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
               )}
             </div>
 
-            <button className="p-2 mt-4 rounded-lg bg-app-500 text-white w-full text-center">
+            <button className="p-2 mt-4 rounded-lg bg-primary text-primary-foreground w-full text-center">
               Record Expense
             </button>
           </form>

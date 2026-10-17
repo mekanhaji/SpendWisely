@@ -1,4 +1,17 @@
 /** @type {import('tailwindcss').Config} */
+
+// The app ramps live in index.css as "r g b" channels so that opacity
+// modifiers such as bg-app-200/80 keep working. Only the steps defined
+// there are exposed here, so an undefined step fails loudly (no class at
+// all) instead of rendering a transparent colour.
+const channelRamp = (prefix) =>
+  Object.fromEntries(
+    ["100", "200", "500", "700", "800", "950"].map((step) => [
+      step,
+      `rgb(var(${prefix}-${step}) / <alpha-value>)`,
+    ]),
+  );
+
 export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
@@ -10,85 +23,49 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        // <alpha-value> lets opacity modifiers work, e.g. bg-primary/20.
+        // Without it Tailwind silently drops the modifier and emits no class.
+        background: "hsl(var(--background) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "hsl(var(--card) / <alpha-value>)",
+          foreground: "hsl(var(--card-foreground) / <alpha-value>)",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "hsl(var(--popover) / <alpha-value>)",
+          foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "hsl(var(--primary) / <alpha-value>)",
+          foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
+          foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "hsl(var(--muted) / <alpha-value>)",
+          foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "hsl(var(--accent) / <alpha-value>)",
+          foreground: "hsl(var(--accent-foreground) / <alpha-value>)",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
         },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        chart: {
-          1: "hsl(var(--chart-1))",
-          2: "hsl(var(--chart-2))",
-          3: "hsl(var(--chart-3))",
-          4: "hsl(var(--chart-4))",
-          5: "hsl(var(--chart-5))",
-        },
+        border: "hsl(var(--border) / <alpha-value>)",
+        input: "hsl(var(--input) / <alpha-value>)",
+        ring: "hsl(var(--ring) / <alpha-value>)",
+        // Secondary brand (clay). Not consumed yet.
+        brand: "rgb(var(--brand) / <alpha-value>)",
         app: {
-          50: "#ECFDFE",
-          100: "#D4FBFC",
-          200: "#AEF7FA",
-          300: "#83F3F7",
-          400: "#58EFF4",
-          500: "#2FE9F1",
-          600: "#0ED0D7",
-          700: "#0B9DA2",
-          800: "#076A6E",
-          900: "#043335",
-          950: "#021C1D",
-          success: "#2FE9F1",
-          warning: {
-            50: "#FEFBEB",
-            100: "#FEF8D8",
-            200: "#FCF2B5",
-            300: "#FBEA8E",
-            400: "#F9E46C",
-            500: "#F8DD45",
-            600: "#F6D209",
-            700: "#B69C07",
-            800: "#7B6905",
-            900: "#3B3202",
-            950: "#1D1901",
-          },
-          error: {
-            50: "#FFEBEB",
-            100: "#FED7D7",
-            200: "#FEAFAF",
-            300: "#FD8686",
-            400: "#FD5959",
-            500: "#FC3232",
-            600: "#EC0303",
-            700: "#B50303",
-            800: "#790202",
-            900: "#3C0101",
-            950: "#1E0000",
-          },
+          ...channelRamp("--app"),
+          foreground: "rgb(var(--app-foreground) / <alpha-value>)",
+          success: "rgb(var(--app-500) / <alpha-value>)",
+          warning: channelRamp("--app-warning"),
+          error: channelRamp("--app-error"),
         },
       },
     },
