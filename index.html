@@ -22,6 +22,24 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Spend Wisely</title>
+    <script>
+      // Set the theme class before first paint so a dark OS doesn't flash cream.
+      (function () {
+        var preference = "system";
+        try {
+          preference =
+            JSON.parse(localStorage.getItem("user-settings") || "{}").state
+              .theme || "system";
+        } catch (error) {
+          preference = "system";
+        }
+        var prefersDark =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var isDark = preference === "dark" || (preference !== "light" && prefersDark);
+        document.documentElement.classList.toggle("dark", isDark);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
