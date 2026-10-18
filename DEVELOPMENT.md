@@ -57,7 +57,13 @@ src/
 
 The app is a static SPA served via Cloudflare Workers (no server code — see `wrangler.jsonc`).
 
+Every build stamps a fresh id into the service worker, so installed PWAs always pick up a deploy (via the in-app update banner, or on their next cold launch at the latest) without reinstalling. Bumping the version below is only about keeping the version label and release notes meaningful — it isn't required for updates to reach users.
+
 ```bash
+npm version patch   # or minor/major — bumps package.json and tags vX.Y.Z
+git push --follow-tags
+gh release create vX.Y.Z --generate-notes
+
 npm run build
 npm run deploy
 ```

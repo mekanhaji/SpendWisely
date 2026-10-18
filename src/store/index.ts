@@ -232,4 +232,33 @@ const usePwaInstallStore = create<PwaInstallStore>((set, get) => ({
   },
 }));
 
-export { useExpenseStore, usePwaInstallStore, useUserSettingsStore };
+export type PwaUpdateStore = {
+  waitingWorker: ServiceWorker | null;
+  setWaitingWorker: (worker: ServiceWorker | null) => void;
+  applyUpdate: () => void;
+};
+
+const usePwaUpdateStore = create<PwaUpdateStore>((set, get) => ({
+  waitingWorker: null,
+  setWaitingWorker: (worker) => set({ waitingWorker: worker }),
+  applyUpdate: () => {
+    const waitingWorker = get().waitingWorker;
+    if (!waitingWorker) return;
+
+    // Only fires once the new worker actually takes control, which only
+    // happens because of the postMessage below (asked for by the user).
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      () => window.location.reload(),
+      { once: true },
+    );
+    waitingWorker.postMessage({ type: "SKIP_WAITING" });
+  },
+}));
+
+export {
+  useExpenseStore,
+  usePwaInstallStore,
+  usePwaUpdateStore,
+  useUserSettingsStore,
+};
