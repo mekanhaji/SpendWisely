@@ -22,7 +22,7 @@ import {
 
 const expenseRecordForm = z.object({
   amount: z.string(),
-  discretion: z.string().optional(),
+  description: z.string().optional(),
 });
 
 type ExpenseRecordForm = z.infer<typeof expenseRecordForm>;
@@ -150,7 +150,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
       const record = getExpenseRecord(updateId);
       if (record) {
         form.setValue("amount", String(record.amount));
-        form.setValue("discretion", record.discretion);
+        form.setValue("description", record.description);
       } else {
         setUpdateId(null);
       }
@@ -174,13 +174,13 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
         updateExpense(updateId, {
           datetime: updateId,
           amount: Number(data.amount),
-          discretion: String(data.discretion),
+          description: String(data.description),
         });
         setUpdateId(null);
       } else {
         addExpense(
           Number(data.amount),
-          data.discretion,
+          data.description,
           buildDatetimeForFilter(filter)
         );
       }
@@ -237,10 +237,10 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
             </div>
 
             <div className="flex flex-col w-full">
-              <label htmlFor="discretion">Description</label>
+              <label htmlFor="description">Description</label>
               <Input
                 type="text"
-                {...form.register("discretion")}
+                {...form.register("description")}
                 placeholder={"e.g. Lunch"}
                 className="p-2 my-2 border border-input rounded-md"
               />

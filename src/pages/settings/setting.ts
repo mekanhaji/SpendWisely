@@ -43,6 +43,6 @@ export const settingList: SettingDefinition[] = [
   {
     id: "warningLimit",
     title: "Daily Expense Warning",
-    description: () => "When should i warn you? 🚨",
+    description: () => "When should I warn you? 🚨",
   },
 ];

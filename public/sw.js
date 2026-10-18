@@ -1,7 +1,10 @@
-const CACHE_NAME = "spend-wisely-v1";
+// The placeholder below is stamped in by vite.config.ts after each build, so
+// this file's bytes change on every deploy and the browser actually installs
+// the new worker instead of treating it as unchanged.
+const CACHE_NAME = "spend-wisely-__BUILD_ID__";
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {

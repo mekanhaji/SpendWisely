@@ -13,7 +13,7 @@ export type BeforeInstallPromptEvent = Event & {
 export type ExpenseRecord = {
   datetime: string;
   amount: number;
-  discretion: string;
+  description: string;
 };
 
 export type ExpenseStore = {
@@ -37,11 +37,11 @@ export type ExpenseStore = {
    * Add expense to the total expense
    *
    * @param expense
-   * @param discretion
+   * @param description
    * @param datetime - ISO string; defaults to now. Used to record expense on filter-selected day.
    * @returns
    */
-  addExpense: (expense: number, discretion?: string, datetime?: string) => void;
+  addExpense: (expense: number, description?: string, datetime?: string) => void;
   /**
    * Update the total expense
    *
@@ -60,13 +60,13 @@ export type ExpenseStore = {
 
 const createExpenseRecord = (
   amount: number,
-  discretion: string,
+  description: string,
   datetime?: string,
 ): ExpenseRecord => {
   return {
     datetime: datetime ?? new Date().toISOString(),
     amount,
-    discretion,
+    description,
   };
 };
 
@@ -78,11 +78,11 @@ const useExpenseStore = create(
       setCurrentExpense: (expense) => set({ currentExpense: expense }),
       getExpenseRecord: (timestamp) =>
         get().expenseRecords.find((record) => record.datetime === timestamp),
-      addExpense: (expense, discretion, datetime) =>
+      addExpense: (expense, description, datetime) =>
         set(() => {
           const expenseRecord = createExpenseRecord(
             expense,
-            discretion || "Expense",
+            description || "Expense",
             datetime,
           );
           return {
@@ -118,6 +118,24 @@ const useExpenseStore = create(
     {
       name: "expense-store",
       storage: createJSONStorage(() => localStorage),
+      version: 1,
+      migrate: (persisted, version) => {
+        // TODO: this v0 -> v1 step only exists to rename `discretion` -> `description`
+        // in old persisted data. Safe to delete once version 1 has shipped long
+        // enough that no users are realistically still on pre-migration data.
+        const state = persisted as Omit<ExpenseStore, "expenseRecords"> & {
+          expenseRecords: (Partial<ExpenseRecord> & { discretion?: string })[];
+        };
+        if (version < 1) {
+          state.expenseRecords = state.expenseRecords?.map(
+            ({ discretion, ...rest }) => ({
+              ...rest,
+              description: discretion ?? "",
+            }),
+          );
+        }
+        return state as ExpenseStore;
+      },
     },
   ),
 );
@@ -214,4 +232,33 @@ const usePwaInstallStore = create<PwaInstallStore>((set, get) => ({
   },
 }));
 
-export { useExpenseStore, usePwaInstallStore, useUserSettingsStore };
+export type PwaUpdateStore = {
+  waitingWorker: ServiceWorker | null;
+  setWaitingWorker: (worker: ServiceWorker | null) => void;
+  applyUpdate: () => void;
+};
+
+const usePwaUpdateStore = create<PwaUpdateStore>((set, get) => ({
+  waitingWorker: null,
+  setWaitingWorker: (worker) => set({ waitingWorker: worker }),
+  applyUpdate: () => {
+    const waitingWorker = get().waitingWorker;
+    if (!waitingWorker) return;
+
+    // Only fires once the new worker actually takes control, which only
+    // happens because of the postMessage below (asked for by the user).
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      () => window.location.reload(),
+      { once: true },
+    );
+    waitingWorker.postMessage({ type: "SKIP_WAITING" });
+  },
+}));
+
+export {
+  useExpenseStore,
+  usePwaInstallStore,
+  usePwaUpdateStore,
+  useUserSettingsStore,
+};

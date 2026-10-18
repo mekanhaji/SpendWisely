@@ -76,6 +76,10 @@ const Settings = () => {
           {controls[setting.id]}
         </SettingsCard>
       ))}
+
+      <p className="text-center text-xs text-muted-foreground mt-4">
+        v{__APP_VERSION__} ({__APP_COMMIT__})
+      </p>
     </main>
   );
 };

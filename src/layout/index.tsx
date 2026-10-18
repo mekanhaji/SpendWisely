@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import UpdateAppBanner from "@/components/UpdateAppBanner";
 
 /** Route each nav tab lives on, so the URL decides which one is active. */
 export const TAB_PATHS = {
@@ -99,6 +100,7 @@ const AppLayout = ({ children, headerOptions }: AppLayoutProps) => {
   return (
     <div className="mx-auto max-w-[625px] mt-2 px-4">
       <Header {...headerOptions} />
+      <UpdateAppBanner />
       <Tabs
         value={tabFromPath(pathname)}
         onValueChange={(value) => {
