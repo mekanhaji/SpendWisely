@@ -15,7 +15,7 @@ const Home = () => {
 
   return (
     <AppLayout>
-      <main className="my-2 flex flex-col items-center gap-4">
+      <main className="my-2 flex flex-col items-center gap-4 pb-28">
         <CreateUpdateExpenseModal
           isDialogOpen={isDialogOpen}
           setIsDialogOpen={setIsDialogOpen}

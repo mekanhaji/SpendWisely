@@ -12,57 +12,32 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CalendarDays } from "lucide-react";
+import {
+  getFirstOfThisMonth,
+  getMondayOfThisWeek,
+  parseLocalISODate,
+  toLocalISODate,
+  type ExpenseFilter,
+  type ExpenseFilterMode,
+} from "@/lib/expense-filter";
 
-export type ExpenseFilterMode =
-  | "all"
-  | "today"
-  | "yesterday"
-  | "week"
-  | "month"
-  | "custom";
-
-export type ExpenseFilter = {
-  mode: ExpenseFilterMode;
-  /** yyyy-mm-dd local, only for custom */
-  from?: string;
-  /** yyyy-mm-dd local, only for custom */
-  to?: string;
-};
+export type { ExpenseFilter, ExpenseFilterMode };
+export {
+  toLocalISODate,
+  parseLocalISODate,
+  startOfDay,
+  endOfDay,
+  getMondayOfThisWeek,
+  getFirstOfThisMonth,
+  matchesFilter,
+} from "@/lib/expense-filter";
 
 export type ExpenseRecordsFilterProps = {
   filter: ExpenseFilter;
   setFilter: (filter: ExpenseFilter) => void;
+  /** Restricts which quick-pill modes render; "custom" dialog always renders. Default: all QUICK_MODES. */
+  modes?: ExpenseFilterMode[];
 };
-
-export const toLocalISODate = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
-export const parseLocalISODate = (s: string): Date | null => {
-  const parts = s.split("-").map(Number);
-  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
-  const [y, m, d] = parts;
-  return new Date(y, m - 1, d);
-};
-
-export const startOfDay = (d: Date): Date =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-export const endOfDay = (d: Date): Date =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-
-export const getMondayOfThisWeek = (now: Date = new Date()): Date => {
-  const day = (now.getDay() + 6) % 7; // Mon=0 ... Sun=6
-  const monday = startOfDay(now);
-  monday.setDate(monday.getDate() - day);
-  return monday;
-};
-
-export const getFirstOfThisMonth = (now: Date = new Date()): Date =>
-  new Date(now.getFullYear(), now.getMonth(), 1);
 
 const formatShort = (iso?: string): string => {
   if (!iso) return "";
@@ -88,7 +63,10 @@ const pillClass = (active: boolean) =>
   );
 
 const ExpenseRecordsFilter = (props: ExpenseRecordsFilterProps) => {
-  const { filter, setFilter } = props;
+  const { filter, setFilter, modes } = props;
+  const visibleModes = modes
+    ? QUICK_MODES.filter((m) => modes.includes(m.mode))
+    : QUICK_MODES;
   const [customOpen, setCustomOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState("");
   const [draftTo, setDraftTo] = useState("");
@@ -155,7 +133,7 @@ const ExpenseRecordsFilter = (props: ExpenseRecordsFilterProps) => {
         aria-label="Expense range"
         className="flex gap-2 flex-wrap items-center w-full"
       >
-        {QUICK_MODES.map((m) => (
+        {visibleModes.map((m) => (
           <button
             key={m.mode}
             type="button"
