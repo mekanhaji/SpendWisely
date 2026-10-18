@@ -9,11 +9,11 @@
   };
 
   const expenseRecords = [
-    { datetime: at(8, 15), amount: 20, discretion: "Morning Chai" },
-    { datetime: at(9, 30), amount: 30, discretion: "Metro" },
-    { datetime: at(13, 5), amount: 120, discretion: "Lunch" },
-    { datetime: at(16, 45), amount: 50, discretion: "Snacks" },
-    { datetime: at(19, 20), amount: 100, discretion: "Groceries" },
+    { datetime: at(8, 15), amount: 20, description: "Morning Chai" },
+    { datetime: at(9, 30), amount: 30, description: "Metro" },
+    { datetime: at(13, 5), amount: 120, description: "Lunch" },
+    { datetime: at(16, 45), amount: 50, description: "Snacks" },
+    { datetime: at(19, 20), amount: 100, description: "Groceries" },
   ];
 
   const currentExpense = expenseRecords.reduce(
@@ -25,7 +25,7 @@
     "expense-store",
     JSON.stringify({
       state: { currentExpense, expenseRecords },
-      version: 0,
+      version: 1,
     }),
   );
 

@@ -122,7 +122,7 @@ const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
         <ItemCardLayout key={record.datetime} className="w-full">
           <div className="flex flex-col justify-between">
             <div className="flex gap-5 items-center">
-              <h2 className="text-2xl">{record.discretion}</h2>
+              <h2 className="text-2xl">{record.description}</h2>
               <div className="flex gap-3">
                 <Pencil
                   className="h-4 w-4 text-app-700 cursor-pointer"
