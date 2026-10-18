@@ -2,14 +2,8 @@ import ItemCardLayout from "@/layout/ItemCardLayout";
 import { useExpenseStore, useUserSettingsStore } from "@/store";
 import { Clock12Icon, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
-import ExpenseRecordsFilter, {
-  endOfDay,
-  getFirstOfThisMonth,
-  getMondayOfThisWeek,
-  parseLocalISODate,
-  startOfDay,
-  type ExpenseFilter,
-} from "./ExpenseRecordsFilter";
+import { matchesFilter, type ExpenseFilter } from "@/lib/expense-filter";
+import ExpenseRecordsFilter from "./ExpenseRecordsFilter";
 
 const formatTime = (datetime: string) => {
   const date = new Date(datetime);
@@ -29,58 +23,6 @@ const formatDateTime = (datetime: string) => {
     minute: "numeric",
     hour12: true,
   });
-};
-
-const matchesFilter = (datetime: string, filter: ExpenseFilter): boolean => {
-  const recordDate = new Date(datetime);
-  const today = new Date();
-
-  switch (filter.mode) {
-    case "all":
-      return true;
-    case "today":
-      return (
-        recordDate.toLocaleDateString("en-IN") ===
-        today.toLocaleDateString("en-IN")
-      );
-    case "yesterday": {
-      const yesterday = new Date();
-      yesterday.setDate(today.getDate() - 1);
-      return (
-        recordDate.toLocaleDateString("en-IN") ===
-        yesterday.toLocaleDateString("en-IN")
-      );
-    }
-    case "week": {
-      const monday = getMondayOfThisWeek(today);
-      return recordDate >= monday;
-    }
-    case "month": {
-      const first = getFirstOfThisMonth(today);
-      return recordDate >= first;
-    }
-    case "custom": {
-      const from = filter.from ? parseLocalISODate(filter.from) : null;
-      const to = filter.to ? parseLocalISODate(filter.to) : null;
-      if (!from && !to) return true;
-      if (from && !to) {
-        return (
-          recordDate >= startOfDay(from) && recordDate <= endOfDay(from)
-        );
-      }
-      if (!from && to) {
-        return recordDate >= startOfDay(to) && recordDate <= endOfDay(to);
-      }
-      // both present (from/to are Date here)
-      let start = startOfDay(from!);
-      let end = endOfDay(to!);
-      if (start > end) {
-        start = startOfDay(to!);
-        end = endOfDay(from!);
-      }
-      return recordDate >= start && recordDate <= end;
-    }
-  }
 };
 
 type ExpenseRecordsListProps = {

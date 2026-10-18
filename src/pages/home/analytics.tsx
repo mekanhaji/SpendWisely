@@ -1,16 +1,19 @@
-import ItemCardLayout from "@/layout/ItemCardLayout";
+import "@/lib/chart-setup";
+import { useMemo, useState } from "react";
 import { useExpenseStore, useUserSettingsStore } from "@/store";
-import { Clock12Icon, Pencil, Trash2 } from "lucide-react";
-import { useMemo } from "react";
-
-const formatDateTime = (datetime: string) => {
-  const date = new Date(datetime);
-  return date.toLocaleString("en-IN", {
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  });
-};
+import ExpenseRecordsFilter from "./components/ExpenseRecordsFilter";
+import type { ExpenseFilter } from "@/lib/expense-filter";
+import {
+  getBudgetComparison,
+  getDailyTotals,
+  getFilteredRecords,
+  getSummaryStats,
+  getTopExpenses,
+} from "@/lib/expense-analytics";
+import AnalyticsSummaryStats from "./components/analytics/AnalyticsSummaryStats";
+import SpendingTrendChart from "./components/analytics/SpendingTrendChart";
+import BudgetComparisonCard from "./components/analytics/BudgetComparisonCard";
+import TopExpensesList from "./components/analytics/TopExpensesList";
 
 type AnalyticsProps = {
   setIsDialogOpen: (isOpen: boolean) => void;
@@ -18,61 +21,72 @@ type AnalyticsProps = {
   updateId: string | null;
 };
 
+const ANALYTICS_FILTER_MODES: ExpenseFilter["mode"][] = [
+  "today",
+  "yesterday",
+  "week",
+  "month",
+];
+
 const Analytics = (props: AnalyticsProps) => {
-  const { setIsDialogOpen, setUpdateId, updateId } = props;
-  const {
-    expenseRecords,
+  const { setIsDialogOpen, setUpdateId } = props;
+  const { expenseRecords, removeExpense } = useExpenseStore();
+  const { currency, dailyLimit, warningLimit } = useUserSettingsStore();
+  const [filter, setFilter] = useState<ExpenseFilter>({ mode: "today" });
 
-    removeExpense,
-    setCurrentExpense,
-  } = useExpenseStore();
-  const currency = useUserSettingsStore((state) => state.currency);
+  const filteredRecords = useMemo(
+    () => getFilteredRecords(expenseRecords, filter),
+    [expenseRecords, filter],
+  );
 
-  const expenseRecordsMemoized = useMemo(() => {
-    // get all the expense records of today
-    const todaysExpenseRecords = [...expenseRecords].reverse();
+  const dailyTotals = useMemo(
+    () => getDailyTotals(expenseRecords, filter),
+    [expenseRecords, filter],
+  );
 
-    // update the current expense
-    setCurrentExpense(
-      todaysExpenseRecords.reduce((acc, record) => acc + record.amount, 0),
-    );
+  const summaryStats = useMemo(
+    () => getSummaryStats(dailyTotals, filteredRecords),
+    [dailyTotals, filteredRecords],
+  );
 
-    return todaysExpenseRecords;
-  }, [expenseRecords, setCurrentExpense, updateId]);
+  const topExpenses = useMemo(
+    () => getTopExpenses(filteredRecords),
+    [filteredRecords],
+  );
+
+  const budgetComparison = useMemo(
+    () => getBudgetComparison(dailyTotals, dailyLimit, warningLimit),
+    [dailyTotals, dailyLimit, warningLimit],
+  );
 
   return (
-    <>
-      {expenseRecordsMemoized.map((record) => (
-        <ItemCardLayout key={record.datetime} className="w-full">
-          <div className="flex flex-col justify-between">
-            <div className="flex gap-5 items-center">
-              <h2 className="text-2xl">{record.description}</h2>
-              <div className="flex gap-3">
-                <Pencil
-                  className="h-4 w-4 text-app-700 cursor-pointer"
-                  onClick={() => {
-                    setUpdateId(record.datetime);
-                    setIsDialogOpen(true);
-                  }}
-                />
-                <Trash2
-                  className="h-4 w-4 text-app-error-700 cursor-pointer"
-                  onClick={() => removeExpense(record.datetime)}
-                />
-              </div>
-            </div>
-            <span className="flex items-center gap-2 uppercase">
-              <Clock12Icon className="h-4 w-4" />{" "}
-              {formatDateTime(record.datetime)}
-            </span>
-          </div>
-          <h1 className="text-4xl">
-            {currency}
-            {record.amount}
-          </h1>
-        </ItemCardLayout>
-      ))}
-    </>
+    <div className="flex flex-col gap-4 w-full">
+      <ExpenseRecordsFilter
+        filter={filter}
+        setFilter={setFilter}
+        modes={ANALYTICS_FILTER_MODES}
+      />
+
+      <AnalyticsSummaryStats stats={summaryStats} currency={currency} />
+
+      <SpendingTrendChart dailyTotals={dailyTotals} dailyLimit={dailyLimit} />
+
+      <BudgetComparisonCard
+        dailyTotals={budgetComparison}
+        dailyLimit={dailyLimit}
+        currency={currency}
+      />
+
+      <TopExpensesList
+        expenses={topExpenses}
+        currency={currency}
+        onEdit={(datetime) => {
+          setUpdateId(datetime);
+          setIsDialogOpen(true);
+        }}
+        onDelete={removeExpense}
+      />
+    </div>
   );
 };
 
