@@ -34,8 +34,8 @@ type ExpenseRecordsListProps = {
 };
 
 const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
-  const { setIsDialogOpen, setUpdateId, updateId, filter, setFilter } = props;
-  const { expenseRecords, removeExpense, setCurrentExpense } = useExpenseStore();
+  const { setIsDialogOpen, setUpdateId, filter, setFilter } = props;
+  const { expenseRecords, removeExpense } = useExpenseStore();
   const currency = useUserSettingsStore((state) => state.currency);
 
   const showDate =
@@ -45,17 +45,10 @@ const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
     filter.mode === "custom";
 
   const expenseRecordsMemoized = useMemo(() => {
-    const filtered = expenseRecords.filter((record) =>
-      matchesFilter(record.datetime, filter)
-    ).reverse();
-
-    // update the current expense
-    setCurrentExpense(
-      filtered.reduce((acc, record) => acc + record.amount, 0)
-    );
-
-    return filtered;
-  }, [expenseRecords, updateId, filter]);
+    return expenseRecords
+      .filter((record) => matchesFilter(record.datetime, filter))
+      .reverse();
+  }, [expenseRecords, filter]);
 
   return (
     <>

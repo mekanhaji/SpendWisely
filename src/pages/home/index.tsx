@@ -25,7 +25,7 @@ const Home = () => {
         />
         <TabsContent value="home" className="w-full">
           <div className="my-2 flex flex-col items-center gap-4">
-            <ExpenseProgressHeader />
+            <ExpenseProgressHeader filter={filter} />
 
             <ExpenseRecordsList
               setIsDialogOpen={setIsDialogOpen}
