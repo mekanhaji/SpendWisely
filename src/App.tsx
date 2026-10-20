@@ -12,6 +12,15 @@ import {
   useUserSettingsStore,
 } from "./store";
 
+/**
+ * Hex mirrors of --background in index.css; Chrome paints the PWA's status
+ * bar from the theme-color meta, which only updates when the page sets it.
+ */
+const THEME_COLORS = {
+  light: "#F5F3ED",
+  dark: "#191b18",
+} as const;
+
 const router = createBrowserRouter([
   {
     path: TAB_PATHS.home,
@@ -53,6 +62,10 @@ function App() {
         theme === "dark" || (theme === "system" && systemPrefersDark.matches);
       // Toggled rather than assigned so any other class on <html> survives.
       document.documentElement.classList.toggle("dark", isDark);
+      // Also matches the initial set from the inline script in index.html.
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute("content", isDark ? THEME_COLORS.dark : THEME_COLORS.light);
     };
 
     applyTheme();

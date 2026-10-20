@@ -21,6 +21,11 @@
     />
     <link rel="manifest" href="manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Updates to match the chrome around the page: dark hex mirrors
+         --background in index.css exactly, light hex matches theme_color in
+         manifest.json. Chrome paints the PWA's status bar from this meta; the
+         scripts below keep it dynamic across themes and OS scheme changes. -->
+    <meta name="theme-color" id="theme-color-meta" content="#F5F3ED" />
     <title>Spend Wisely</title>
     <script>
       // Set the theme class before first paint so a dark OS doesn't flash cream.
@@ -38,6 +43,10 @@
           window.matchMedia("(prefers-color-scheme: dark)").matches;
         var isDark = preference === "dark" || (preference !== "light" && prefersDark);
         document.documentElement.classList.toggle("dark", isDark);
+        var metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute("content", isDark ? "#191b18" : "#F5F3ED");
+        }
       })();
     </script>
   </head>
