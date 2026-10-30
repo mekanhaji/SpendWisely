@@ -44,11 +44,60 @@
       "label": "Spend Wisely - Daily expenses"
     },
     {
+      "src": "screenshots/narrow-2.jpg",
+      "sizes": "1080x2204",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Know what's left today"
+    },
+    {
+      "src": "screenshots/narrow-3.jpg",
+      "sizes": "1080x2204",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Add an expense in seconds"
+    },
+    {
+      "src": "screenshots/narrow-4.jpg",
+      "sizes": "1080x2204",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Swipe to delete, with Undo"
+    },
+    {
+      "src": "screenshots/narrow-5.jpg",
+      "sizes": "1080x2204",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "See where your money goes"
+    },
+    {
+      "src": "screenshots/narrow-6.jpg",
+      "sizes": "1080x2204",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Private, offline, yours"
+    },
+    {
       "src": "screenshots/wide-1.jpg",
       "sizes": "1280x800",
       "type": "image/jpeg",
       "form_factor": "wide",
       "label": "Spend Wisely - Daily expenses"
+    },
+    {
+      "src": "screenshots/wide-2.jpg",
+      "sizes": "1280x800",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Your spending, at a glance"
+    },
+    {
+      "src": "screenshots/wide-3.jpg",
+      "sizes": "1280x800",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Fast on desktop, too"
     }
   ],
   "shortcuts": [
