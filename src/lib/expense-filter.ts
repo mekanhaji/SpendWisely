@@ -137,3 +137,11 @@ export const resolveFilterRange = (
     }
   }
 };
+
+/** Today/Yesterday presets and a custom From = To pick cover exactly one day. */
+export const isSingleDayFilter = (filter: ExpenseFilter): boolean =>
+  filter.mode === "today" ||
+  filter.mode === "yesterday" ||
+  (filter.mode === "custom" &&
+    Boolean(filter.from) &&
+    filter.from === filter.to);

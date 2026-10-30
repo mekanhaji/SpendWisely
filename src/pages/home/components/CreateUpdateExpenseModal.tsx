@@ -1,18 +1,25 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useExpenseStore, type AddExpenseIntent } from "@/store";
-import { Plus, X } from "lucide-react";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
+  useExpenseStore,
+  useUserSettingsStore,
+  type AddExpenseIntent,
+} from "@/store";
+import { Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useDeleteExpense } from "@/hooks/useDeleteExpense";
+import { haptic, requestPersistentStorage } from "@/lib/pwa";
 import CategoryCombobox from "@/components/CategoryCombobox";
 import CategorySuggestionChips from "@/components/CategorySuggestionChips";
 import {
@@ -166,6 +173,8 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
     addCategory,
     expenseRecords,
   } = useExpenseStore();
+  const currency = useUserSettingsStore((state) => state.currency);
+  const deleteExpense = useDeleteExpense();
   const [showNotes, setShowNotes] = useState(false);
   const [debouncedAmount, setDebouncedAmount] = useState("");
   const [frozenAmount, setFrozenAmount] = useState<string | null>(null);
@@ -275,6 +284,10 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
         });
         setUpdateId(null);
       } else {
+        // Expenses only live in this browser's storage, so ask it to keep
+        // them once there is something worth keeping.
+        if (expenseRecords.length === 0) void requestPersistentStorage();
+
         addExpense(
           Number(data.amount),
           resolvedCategory,
@@ -282,6 +295,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
           buildDatetimeForFilter(filter)
         );
       }
+      haptic(10);
       return true;
     } catch (error) {
       console.error(error);
@@ -320,12 +334,20 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
     closeAfterSave();
   };
 
+  const handleDelete = () => {
+    if (!updateId) return;
+    const record = getExpenseRecord(updateId);
+    if (record) deleteExpense(record);
+    setUpdateId(null);
+    closeAfterSave();
+  };
+
   return (
-    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+    <Drawer open={isDialogOpen} onOpenChange={handleOpenChange}>
       {showTrigger && (
         // Docked above the tab bar, on the thumb side, inside the app column.
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[625px] justify-end px-4">
-          <DialogTrigger
+          <DrawerTrigger
             className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-float transition duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             title="Add Expense"
             aria-label="Add expense"
@@ -338,15 +360,15 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
             }}
           >
             <Plus className="h-7 w-7" />
-          </DialogTrigger>
+          </DrawerTrigger>
         </div>
       )}
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>
             {updateId ? "Update your expense" : getCreateTitle(filter)}
-          </DialogTitle>
-          <DialogDescription>
+          </DrawerTitle>
+          <DrawerDescription>
             {updateId ? (
               "Edit the details of your spending"
             ) : (
@@ -357,96 +379,130 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
                 </span>
               </>
             )}
-          </DialogDescription>
-          <form className="flex flex-col items-center" onSubmit={onSubmit}>
-            <div className="flex flex-col w-full">
-              <label htmlFor="amount">Amount</label>
-              <Input
+          </DrawerDescription>
+        </DrawerHeader>
+
+        <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+          <div className="flex flex-col items-center gap-1 py-2">
+            <label
+              htmlFor="amount"
+              className="text-sm font-medium text-muted-foreground"
+            >
+              Amount
+            </label>
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-3xl font-semibold text-muted-foreground">
+                {currency}
+              </span>
+              <input
+                id="amount"
                 type="number"
+                inputMode="decimal"
+                enterKeyHint="done"
+                step="any"
+                min="0"
+                autoComplete="off"
+                autoFocus
+                placeholder="0"
                 {...form.register("amount")}
-                placeholder={"e.g. 10"}
-                className="p-2 my-2 border border-input rounded-md"
-              />
-              {form.formState.errors.amount && (
-                <p className="text-app-error-500 text-sm">
-                  {form.formState.errors.amount.message}
-                </p>
-              )}
-            </div>
-
-            <div className="w-full my-1">
-              <CategorySuggestionChips
-                suggestions={suggestions}
-                selectedCategory={category}
-                canRecord={hasValidAmount}
-                onPick={handleSuggestionPick}
-                onInteractionStart={() => setFrozenAmount(debouncedAmount)}
-                onInteractionEnd={() => setFrozenAmount(null)}
+                // Digits are tabular, so 1ch is one digit wide: the field
+                // hugs what is typed and the currency stays next to it.
+                style={{ width: `${Math.max(amount.length, 1) + 1}ch` }}
+                className="max-w-[70vw] bg-transparent text-left text-5xl font-semibold tabular-nums outline-none placeholder:text-muted-foreground/40"
               />
             </div>
+          </div>
 
-            <div className="flex flex-col w-full">
-              <label htmlFor="category">Category</label>
-              <CategoryCombobox
-                id="category"
-                value={category}
-                onChange={(next) =>
-                  form.setValue("category", next, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
-                onCreate={addCategory}
-                categories={categories}
-                placeholder="e.g. Food"
-              />
-            </div>
+          <CategorySuggestionChips
+            suggestions={suggestions}
+            selectedCategory={category}
+            canRecord={hasValidAmount}
+            recordsOnTap={!updateId}
+            onPick={handleSuggestionPick}
+            onInteractionStart={() => setFrozenAmount(debouncedAmount)}
+            onInteractionEnd={() => setFrozenAmount(null)}
+          />
 
-            <div className="flex flex-col w-full">
-              {showNotes ? (
-                <>
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="notes">Note</label>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        setShowNotes(false);
-                        form.setValue("notes", "");
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                      Remove note
-                    </button>
-                  </div>
-                  <Input
-                    id="notes"
-                    type="text"
-                    {...form.register("notes")}
-                    placeholder="e.g. Lunch with the team"
-                    className="p-2 my-2 border border-input rounded-md"
-                    autoFocus
-                  />
-                </>
-              ) : (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="category" className="text-sm font-medium">
+              Category
+            </label>
+            <CategoryCombobox
+              id="category"
+              value={category}
+              onChange={(next) =>
+                form.setValue("category", next, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              onCreate={addCategory}
+              categories={categories}
+              placeholder="e.g. Food"
+            />
+          </div>
+
+          {showNotes ? (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label htmlFor="notes" className="text-sm font-medium">
+                  Note
+                </label>
                 <button
                   type="button"
-                  className="flex items-center gap-1 self-start my-1 text-sm text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowNotes(true)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setShowNotes(false);
+                    form.setValue("notes", "");
+                  }}
                 >
-                  <Plus className="h-4 w-4" />
-                  Add note
+                  <X className="h-3 w-3" />
+                  Remove note
                 </button>
-              )}
+              </div>
+              <Input
+                id="notes"
+                type="text"
+                {...form.register("notes")}
+                placeholder="e.g. Lunch with the team"
+              />
             </div>
-
-            <button className="p-2 mt-4 rounded-lg bg-primary text-primary-foreground w-full text-center">
-              Record Expense
+          ) : (
+            <button
+              type="button"
+              className="flex items-center gap-1 self-start text-sm text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setShowNotes(true);
+                // After the field renders. Not autoFocus, which would also
+                // steal focus from the amount when a share pre-fills a note.
+                window.setTimeout(() => form.setFocus("notes"), 0);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add note
             </button>
-          </form>
-        </DialogHeader>
-      </DialogContent>
-    </Dialog>
+          )}
+
+          <div className="flex flex-col gap-2 pt-1">
+            <Button type="submit" size="lg" disabled={!hasValidAmount}>
+              {updateId ? "Save changes" : "Record Expense"}
+            </Button>
+            {updateId && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                className="text-destructive"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete expense
+              </Button>
+            )}
+          </div>
+        </form>
+      </DrawerContent>
+    </Drawer>
   );
 };
 

@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import CategoryAvatar from "@/components/CategoryAvatar";
 import { cn } from "@/lib/utils";
 import type { CategorySuggestion } from "@/lib/category-suggestions";
 
@@ -7,6 +8,11 @@ type CategorySuggestionChipsProps = {
   selectedCategory: string;
   /** True when the amount is valid, so a tap would actually record. */
   canRecord: boolean;
+  /**
+   * False while editing, where a tap only picks the category and the explicit
+   * save button records it.
+   */
+  recordsOnTap?: boolean;
   onPick: (category: string) => void;
   /** Called when the pointer or keyboard focus enters the row (freezes ranking). */
   onInteractionStart?: () => void;
@@ -25,6 +31,7 @@ const CategorySuggestionChips = ({
   suggestions,
   selectedCategory,
   canRecord,
+  recordsOnTap = true,
   onPick,
   onInteractionStart,
   onInteractionEnd,
@@ -48,7 +55,11 @@ const CategorySuggestionChips = ({
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm text-muted-foreground">Suggested</span>
         <span className="text-xs text-muted-foreground">
-          {canRecord ? "Tap to record" : "Enter an amount to record"}
+          {!recordsOnTap
+            ? "Tap to choose"
+            : canRecord
+              ? "Tap to record"
+              : "Enter an amount to record"}
         </span>
       </div>
 
@@ -70,14 +81,16 @@ const CategorySuggestionChips = ({
               title={suggestion.isStrong ? "Likely match" : undefined}
               onClick={() => onPick(suggestion.category)}
               className={cn(
-                "flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition-colors",
+                "flex min-h-10 items-center gap-2 rounded-full border py-1.5 pl-2 pr-3.5 text-sm transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isSelected
                   ? "border-primary bg-primary text-primary-foreground"
-                  : "border-input bg-background hover:bg-accent hover:text-accent-foreground",
-                !isSelected && suggestion.isStrong && "border-primary/60 font-medium",
+                  : "border-input bg-card hover:bg-accent hover:text-accent-foreground",
+                // A strong guess gets the clay accent; weak ones look ordinary.
+                !isSelected && suggestion.isStrong && "border-brand font-medium",
               )}
             >
+              <CategoryAvatar category={suggestion.category} size="xs" />
               {suggestion.category}
               {suggestion.isStrong && (
                 <Check className="h-3.5 w-3.5" aria-hidden="true" />

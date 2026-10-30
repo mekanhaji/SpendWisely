@@ -81,6 +81,14 @@ export type ExpenseStore = {
    * @returns
    */
   removeExpense: (timestamp: string) => void;
+  /**
+   * Put a previously removed record back as-is (used by "Undo"). Does nothing
+   * if a record with the same timestamp exists again.
+   *
+   * @param record
+   * @returns
+   */
+  restoreExpense: (record: ExpenseRecord) => void;
 };
 
 const createExpenseRecord = (
@@ -207,6 +215,16 @@ const useExpenseStore = create(
           return state;
         });
       },
+      restoreExpense: (record) =>
+        set((state) => {
+          if (state.expenseRecords.some((r) => r.datetime === record.datetime)) {
+            return state;
+          }
+          return {
+            expenseRecords: [...state.expenseRecords, record],
+            categories: mergeCategoryNames(state.categories, [record.category]),
+          };
+        }),
     }),
     {
       name: "expense-store",

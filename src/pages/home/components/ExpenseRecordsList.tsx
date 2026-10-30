@@ -1,8 +1,16 @@
-import ItemCardLayout from "@/layout/ItemCardLayout";
-import { useExpenseStore, useUserSettingsStore } from "@/store";
-import { Clock12Icon, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
-import { matchesFilter, type ExpenseFilter } from "@/lib/expense-filter";
+import { Wallet } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import ExpenseRow from "@/components/ExpenseRow";
+import SwipeableRow from "@/components/SwipeableRow";
+import { useDeleteExpense } from "@/hooks/useDeleteExpense";
+import { useExpenseStore, useUserSettingsStore, type ExpenseRecord } from "@/store";
+import {
+  isSingleDayFilter,
+  matchesFilter,
+  toLocalISODate,
+  type ExpenseFilter,
+} from "@/lib/expense-filter";
 import ExpenseRecordsFilter from "./ExpenseRecordsFilter";
 
 const formatTime = (datetime: string) => {
@@ -14,14 +22,27 @@ const formatTime = (datetime: string) => {
   });
 };
 
-const formatDateTime = (datetime: string) => {
-  const date = new Date(datetime);
-  return date.toLocaleString("en-IN", {
+type DayGroup = {
+  /** yyyy-mm-dd, local */
+  date: string;
+  records: ExpenseRecord[];
+  total: number;
+};
+
+/** "Today", "Yesterday", otherwise e.g. "Mon, 27 Oct". */
+const formatDayLabel = (isoDate: string): string => {
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  if (isoDate === toLocalISODate(now)) return "Today";
+  if (isoDate === toLocalISODate(yesterday)) return "Yesterday";
+
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-IN", {
+    weekday: "short",
     day: "numeric",
     month: "short",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
   });
 };
 
@@ -35,61 +56,89 @@ type ExpenseRecordsListProps = {
 
 const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
   const { setIsDialogOpen, setUpdateId, filter, setFilter } = props;
-  const { expenseRecords, removeExpense } = useExpenseStore();
+  const expenseRecords = useExpenseStore((state) => state.expenseRecords);
   const currency = useUserSettingsStore((state) => state.currency);
+  const deleteExpense = useDeleteExpense();
 
-  const showDate =
-    filter.mode === "all" ||
-    filter.mode === "week" ||
-    filter.mode === "month" ||
-    filter.mode === "custom";
+  // A single day needs no day headers; anything longer is grouped by day.
+  const grouped = !isSingleDayFilter(filter);
 
-  const expenseRecordsMemoized = useMemo(() => {
-    return expenseRecords
+  // Newest first. Records are keyed by insertion order in the store, which is
+  // not always chronological (yesterday's spend added today), so sort here.
+  const days = useMemo<DayGroup[]>(() => {
+    const byDay = new Map<string, DayGroup>();
+    const sorted = expenseRecords
       .filter((record) => matchesFilter(record.datetime, filter))
-      .reverse();
+      .sort(
+        (a, b) =>
+          new Date(b.datetime).getTime() - new Date(a.datetime).getTime(),
+      );
+
+    for (const record of sorted) {
+      const key = toLocalISODate(new Date(record.datetime));
+      const day = byDay.get(key) ?? { date: key, records: [], total: 0 };
+      day.records.push(record);
+      day.total += record.amount;
+      byDay.set(key, day);
+    }
+    return Array.from(byDay.values());
   }, [expenseRecords, filter]);
+
+  const edit = (record: ExpenseRecord) => {
+    setUpdateId(record.datetime);
+    setIsDialogOpen(true);
+  };
 
   return (
     <>
       <ExpenseRecordsFilter filter={filter} setFilter={setFilter} />
-      {expenseRecordsMemoized.map((record) => (
-        <ItemCardLayout key={record.datetime} className="w-full">
-          <div className="flex flex-col justify-between">
-            <div className="flex gap-5 items-center">
-              <h2 className="text-2xl">{record.category}</h2>
-              <div className="flex gap-3">
-                <Pencil
-                  className="h-4 w-4 text-app-700 cursor-pointer"
-                  onClick={() => {
-                    setUpdateId(record.datetime);
-                    setIsDialogOpen(true);
-                  }}
-                />
-                <Trash2
-                  className="h-4 w-4 text-app-error-700 cursor-pointer"
-                  onClick={() => removeExpense(record.datetime)}
-                />
-              </div>
-            </div>
-            {/* Migrated records have the old description as both category and
-                note, so skip the duplicate line. */}
-            {record.notes && record.notes !== record.category && (
-              <p className="text-sm text-muted-foreground line-clamp-1">
-                {record.notes}
-              </p>
+
+      {days.length === 0 ? (
+        <div className="flex w-full flex-col items-center gap-2 py-12 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+            <Wallet className="h-6 w-6" />
+          </span>
+          <p className="font-medium">
+            {filter.mode === "today"
+              ? "No spends yet today"
+              : "No spends in this period"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Tap + to record one.
+          </p>
+        </div>
+      ) : (
+        days.map((day) => (
+          <section key={day.date} className="w-full">
+            {grouped && (
+              <header className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-1 flex items-baseline justify-between bg-background/90 px-1 py-2 backdrop-blur-md">
+                <h2 className="text-sm font-semibold">
+                  {formatDayLabel(day.date)}
+                </h2>
+                <span className="text-sm tabular-nums text-muted-foreground">
+                  {currency}
+                  {day.total}
+                </span>
+              </header>
             )}
-            <span className="flex items-center gap-2 uppercase">
-              <Clock12Icon className="h-4 w-4" />{" "}
-              {showDate ? formatDateTime(record.datetime) : formatTime(record.datetime)}
-            </span>
-          </div>
-          <h1 className="text-4xl">
-            {currency}
-            {record.amount}
-          </h1>
-        </ItemCardLayout>
-      ))}
+            <Card className="divide-y overflow-hidden">
+              {day.records.map((record) => (
+                <SwipeableRow
+                  key={record.datetime}
+                  onSwipeDelete={() => deleteExpense(record)}
+                >
+                  <ExpenseRow
+                    record={record}
+                    currency={currency}
+                    meta={formatTime(record.datetime)}
+                    onEdit={() => edit(record)}
+                  />
+                </SwipeableRow>
+              ))}
+            </Card>
+          </section>
+        ))
+      )}
     </>
   );
 };

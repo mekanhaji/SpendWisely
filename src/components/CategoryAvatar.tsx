@@ -40,6 +40,7 @@ const toneForName = (name: string): number => {
 };
 
 const SIZES = {
+  xs: "h-6 w-6 rounded-md text-xs [&>svg]:h-3.5 [&>svg]:w-3.5",
   sm: "h-8 w-8 rounded-lg text-sm [&>svg]:h-4 [&>svg]:w-4",
   md: "h-10 w-10 rounded-xl text-base [&>svg]:h-5 [&>svg]:w-5",
   lg: "h-12 w-12 rounded-2xl text-lg [&>svg]:h-6 [&>svg]:w-6",

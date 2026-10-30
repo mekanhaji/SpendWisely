@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import CategoryAvatar from "@/components/CategoryAvatar";
 import { cn } from "@/lib/utils";
 
 type CategoryComboboxProps = {
@@ -127,7 +128,7 @@ const CategoryCombobox = ({
         aria-autocomplete="list"
         value={open ? query : value}
         placeholder={placeholder}
-        className={cn("p-2 my-2 border border-input rounded-md", className)}
+        className={className}
         onFocus={() => setOpen(true)}
         onClick={() => setOpen(true)}
         onChange={(event) => {
@@ -141,9 +142,11 @@ const CategoryCombobox = ({
       />
 
       {showList && (
+        // In flow, not floating: the add sheet scrolls, and a floating list
+        // would be clipped by it.
         <ul
           role="listbox"
-          className="absolute left-0 right-0 z-50 -mt-1 max-h-52 overflow-y-auto rounded-md border bg-background py-1 shadow-md"
+          className="mt-1.5 max-h-48 overflow-y-auto rounded-lg border bg-card py-1"
         >
           {matches.map((category, index) => (
             <li key={category}>
@@ -152,7 +155,7 @@ const CategoryCombobox = ({
                 role="option"
                 aria-selected={index === activeIndex}
                 className={cn(
-                  "flex w-full items-center px-3 py-2 text-left text-sm hover:bg-accent",
+                  "flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-accent",
                   index === activeIndex && "bg-accent",
                 )}
                 // Keeps focus in the input so the list does not close before
@@ -161,6 +164,7 @@ const CategoryCombobox = ({
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => select(category)}
               >
+                <CategoryAvatar category={category} size="xs" />
                 {category}
               </button>
             </li>
@@ -173,7 +177,7 @@ const CategoryCombobox = ({
                 role="option"
                 aria-selected={activeIndex === matches.length}
                 className={cn(
-                  "flex w-full items-center gap-1 px-3 py-2 text-left text-sm text-app-700 dark:text-app-300 hover:bg-accent",
+                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-primary hover:bg-accent",
                   activeIndex === matches.length && "bg-accent",
                 )}
                 onMouseDown={(event) => event.preventDefault()}
