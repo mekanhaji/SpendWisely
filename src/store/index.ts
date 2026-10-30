@@ -1,5 +1,12 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  DEFAULT_CATEGORIES,
+  EXPENSE_STORE_VERSION,
+  UNCATEGORIZED_CATEGORY,
+  mergeCategoryNames,
+  migrateExpenseState,
+} from "@/lib/migrations/expense-migrations";
 
 export type BeforeInstallPromptEvent = Event & {
   readonly platforms: string[];
@@ -13,12 +20,15 @@ export type BeforeInstallPromptEvent = Event & {
 export type ExpenseRecord = {
   datetime: string;
   amount: number;
-  description: string;
+  category: string;
+  notes: string;
 };
 
 export type ExpenseStore = {
   currentExpense: number;
   expenseRecords: ExpenseRecord[];
+  /** Categories the user can pick from; extended whenever they create one. */
+  categories: string[];
   /**
    * Set the current expense
    *
@@ -37,11 +47,26 @@ export type ExpenseStore = {
    * Add expense to the total expense
    *
    * @param expense
-   * @param description
+   * @param category - falls back to "Uncategorized" when blank
+   * @param notes - optional free text
    * @param datetime - ISO string; defaults to now. Used to record expense on filter-selected day.
    * @returns
    */
-  addExpense: (expense: number, description?: string, datetime?: string) => void;
+  addExpense: (
+    expense: number,
+    category?: string,
+    notes?: string,
+    datetime?: string,
+  ) => void;
+  /**
+   * Add a category to the picker if it does not exist yet (case-insensitive).
+   *
+   * @param category
+   * @returns
+   */
+  addCategory: (category: string) => void;
+  renameCategory: (from: string, to: string) => void;
+  removeCategory: (category: string) => void;
   /**
    * Update the total expense
    *
@@ -60,13 +85,15 @@ export type ExpenseStore = {
 
 const createExpenseRecord = (
   amount: number,
-  description: string,
+  category: string,
+  notes: string,
   datetime?: string,
 ): ExpenseRecord => {
   return {
     datetime: datetime ?? new Date().toISOString(),
     amount,
-    description,
+    category: category.trim() || UNCATEGORIZED_CATEGORY,
+    notes: notes.trim(),
   };
 };
 
@@ -75,29 +102,95 @@ const useExpenseStore = create(
     (set, get) => ({
       currentExpense: 0,
       expenseRecords: [],
+      categories: [...DEFAULT_CATEGORIES],
       setCurrentExpense: (expense) => set({ currentExpense: expense }),
       getExpenseRecord: (timestamp) =>
         get().expenseRecords.find((record) => record.datetime === timestamp),
-      addExpense: (expense, description, datetime) =>
-        set(() => {
+      addExpense: (expense, category = "", notes = "", datetime) =>
+        set((state) => {
           const expenseRecord = createExpenseRecord(
             expense,
-            description || "Expense",
+            category,
+            notes,
             datetime,
           );
           return {
-            expenseRecords: [...get().expenseRecords, expenseRecord],
+            expenseRecords: [...state.expenseRecords, expenseRecord],
+            categories: mergeCategoryNames(state.categories, [
+              expenseRecord.category,
+            ]),
+          };
+        }),
+      addCategory: (category) =>
+        set((state) => {
+          const categories = mergeCategoryNames(state.categories, [category]);
+          return categories.length === state.categories.length
+            ? state
+            : { categories };
+        }),
+      renameCategory: (from, to) =>
+        set((state) => {
+          const previous = from.trim();
+          const next = to.trim();
+          if (!previous || !next) return state;
+          const previousLower = previous.toLowerCase();
+          const nextLower = next.toLowerCase();
+          if (previousLower === nextLower) return state;
+
+          // Renaming onto an existing category merges both sets of records.
+          const target =
+            state.categories.find((c) => c.toLowerCase() === nextLower) ?? next;
+
+          const records = state.expenseRecords.map((record) =>
+            record.category.trim().toLowerCase() === previousLower
+              ? { ...record, category: target }
+              : record,
+          );
+
+          const categories = state.categories.filter(
+            (c) => c.trim().toLowerCase() !== previousLower,
+          );
+          if (!categories.some((c) => c.trim().toLowerCase() === nextLower)) {
+            categories.push(target);
+          }
+
+          return { expenseRecords: records, categories };
+        }),
+      removeCategory: (category) =>
+        set((state) => {
+          const name = category.trim();
+          // The fallback category is always available for uncategorised records.
+          if (name.toLowerCase() === UNCATEGORIZED_CATEGORY.toLowerCase()) {
+            return state;
+          }
+
+          return {
+            categories: state.categories.filter(
+              (c) => c.trim().toLowerCase() !== name.toLowerCase(),
+            ),
+            expenseRecords: state.expenseRecords.map((record) =>
+              record.category.trim().toLowerCase() === name.toLowerCase()
+                ? { ...record, category: UNCATEGORIZED_CATEGORY }
+                : record,
+            ),
           };
         }),
       updateExpense: (timestamp, record) =>
         set((state) => {
           const index = state.expenseRecords.findIndex(
-            (record) => record.datetime === timestamp,
+            (expense) => expense.datetime === timestamp,
           );
-          if (index !== -1) {
-            state.expenseRecords[index] = record;
-          }
-          return state;
+          if (index === -1) return state;
+
+          const expenseRecords = [...state.expenseRecords];
+          expenseRecords[index] = record;
+
+          return {
+            expenseRecords,
+            categories: mergeCategoryNames(state.categories, [
+              record.category,
+            ]),
+          };
         }),
       removeExpense: (timestamp) => {
         set((state) => {
@@ -118,24 +211,12 @@ const useExpenseStore = create(
     {
       name: "expense-store",
       storage: createJSONStorage(() => localStorage),
-      version: 1,
-      migrate: (persisted, version) => {
-        // TODO: this v0 -> v1 step only exists to rename `discretion` -> `description`
-        // in old persisted data. Safe to delete once version 1 has shipped long
-        // enough that no users are realistically still on pre-migration data.
-        const state = persisted as Omit<ExpenseStore, "expenseRecords"> & {
-          expenseRecords: (Partial<ExpenseRecord> & { discretion?: string })[];
-        };
-        if (version < 1) {
-          state.expenseRecords = state.expenseRecords?.map(
-            ({ discretion, ...rest }) => ({
-              ...rest,
-              description: discretion ?? "",
-            }),
-          );
-        }
-        return state as ExpenseStore;
-      },
+      version: EXPENSE_STORE_VERSION,
+      // Runs once per browser, on the client, when the stored version is
+      // older than EXPENSE_STORE_VERSION. See the migration module for the
+      // description -> category/notes step.
+      migrate: (persisted, version) =>
+        migrateExpenseState(persisted, version) as ExpenseStore,
     },
   ),
 );

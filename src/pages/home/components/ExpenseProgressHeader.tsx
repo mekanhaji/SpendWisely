@@ -1,12 +1,45 @@
+import { useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useExpenseStore, useUserSettingsStore } from "@/store";
-import { getDayBudgetStatus, percentageOfLimit } from "@/lib/expense-analytics";
+import {
+  getDailyTotals,
+  getDayBudgetStatus,
+  percentageOfLimit,
+} from "@/lib/expense-analytics";
+import type { ExpenseFilter } from "@/lib/expense-filter";
 
-const ExpenseProgressHeader = () => {
-  const { currentExpense: expense } = useExpenseStore();
+/** Today/Yesterday presets and a custom From = To pick cover exactly one day. */
+const isSingleDayFilter = (filter: ExpenseFilter): boolean =>
+  filter.mode === "today" ||
+  filter.mode === "yesterday" ||
+  (filter.mode === "custom" &&
+    Boolean(filter.from) &&
+    filter.from === filter.to);
+
+/**
+ * Budget header scoped to the active filter. Single days keep the
+ * spent-vs-limit read; a multi-day range compares the average day against the
+ * daily limit (same calendar-day math the Analytics "Average / day" tile uses,
+ * zero-spend days included) and surfaces the range total below.
+ */
+const ExpenseProgressHeader = ({ filter }: { filter: ExpenseFilter }) => {
+  const { expenseRecords } = useExpenseStore();
   const { currency, dailyLimit, warningLimit } = useUserSettingsStore();
-  const status = getDayBudgetStatus(expense, dailyLimit, warningLimit);
+
+  // One bucket per day in the range (zeroes included), totals precomputed.
+  const dailyTotals = useMemo(
+    () => getDailyTotals(expenseRecords, filter),
+    [expenseRecords, filter],
+  );
+
+  const singleDay = isSingleDayFilter(filter);
+  const total = dailyTotals.reduce((sum, day) => sum + day.total, 0);
+  const dayCount = dailyTotals.length;
+  /** Days a self-respecting average divides by; single days budget as 1. */
+  const averagePerDay = dayCount ? total / dayCount : 0;
+  const tracked = singleDay ? total : Math.round(averagePerDay);
+  const status = getDayBudgetStatus(tracked, dailyLimit, warningLimit);
 
   return (
     <div
@@ -17,7 +50,7 @@ const ExpenseProgressHeader = () => {
       })}
     >
       <Progress
-        value={percentageOfLimit(expense, dailyLimit)}
+        value={percentageOfLimit(tracked, dailyLimit)}
         className={cn({
           "[&>div]:bg-app-error-500": status === "over",
           "[&>div]:bg-app-warning-500": status === "warning",
@@ -31,8 +64,21 @@ const ExpenseProgressHeader = () => {
           "text-app-warning-500": status === "warning",
         })}
       >
-        {currency} {expense} / {dailyLimit}
+        {currency} {tracked} / {dailyLimit}
+        {singleDay ? null : (
+          <span className="text-sm font-medium text-muted-foreground">
+            {" "}
+            avg/day
+          </span>
+        )}
       </h1>
+
+      {singleDay ? null : (
+        <p className="text-center text-sm text-muted-foreground">
+          Total spent {currency}
+          {total} across {dayCount} {dayCount === 1 ? "day" : "days"}
+        </p>
+      )}
     </div>
   );
 };

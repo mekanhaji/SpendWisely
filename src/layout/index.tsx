@@ -13,8 +13,13 @@ type TabValue = keyof typeof TAB_PATHS;
 
 const TAB_VALUES = Object.keys(TAB_PATHS) as TabValue[];
 
-const tabFromPath = (pathname: string): TabValue =>
-  TAB_VALUES.find((tab) => TAB_PATHS[tab] === pathname) ?? "home";
+const tabFromPath = (pathname: string): TabValue => {
+  const match = TAB_VALUES.filter(
+    (tab) =>
+      TAB_PATHS[tab] === "/" ? pathname === "/" : pathname.startsWith(TAB_PATHS[tab]),
+  ).sort((a, b) => TAB_PATHS[b].length - TAB_PATHS[a].length)[0];
+  return match ?? "home";
+};
 
 type HeaderProps = {
   /**

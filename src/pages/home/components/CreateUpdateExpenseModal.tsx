@@ -7,12 +7,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useExpenseStore } from "@/store";
-import { Plus } from "lucide-react";
-import { useEffect } from "react";
+import { Plus, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import CategoryCombobox from "@/components/CategoryCombobox";
+import CategorySuggestionChips from "@/components/CategorySuggestionChips";
+import {
+  buildCategoryProfile,
+  rankCategorySuggestions,
+} from "@/lib/category-suggestions";
+import { UNCATEGORIZED_CATEGORY } from "@/lib/migrations/expense-migrations";
 import {
   getFirstOfThisMonth,
   getMondayOfThisWeek,
@@ -22,7 +29,8 @@ import {
 
 const expenseRecordForm = z.object({
   amount: z.string(),
-  description: z.string().optional(),
+  category: z.string(),
+  notes: z.string().optional(),
 });
 
 type ExpenseRecordForm = z.infer<typeof expenseRecordForm>;
@@ -139,23 +147,82 @@ const buildDatetimeForFilter = (filter: ExpenseFilter): string => {
 const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
   const { isDialogOpen, setIsDialogOpen, setUpdateId, updateId, filter } =
     props;
-  const { addExpense, updateExpense, getExpenseRecord } = useExpenseStore();
+  const {
+    addExpense,
+    updateExpense,
+    getExpenseRecord,
+    categories,
+    addCategory,
+    expenseRecords,
+  } = useExpenseStore();
+  const [showNotes, setShowNotes] = useState(false);
+  const [debouncedAmount, setDebouncedAmount] = useState("");
+  const [frozenAmount, setFrozenAmount] = useState<string | null>(null);
+  const [suggestionNow, setSuggestionNow] = useState(() => new Date());
 
   const form = useForm<ExpenseRecordForm>({
     resolver: zodResolver(expenseRecordForm),
   });
 
+  const category = form.watch("category") ?? "";
+  const amount = form.watch("amount") ?? "";
+
+  // Rank after a pause instead of on every keystroke, so the chips do not
+  // flicker while the amount is being typed.
   useEffect(() => {
-    if (updateId && isDialogOpen) {
+    const timer = window.setTimeout(() => setDebouncedAmount(amount), 250);
+    return () => window.clearTimeout(timer);
+  }, [amount]);
+
+  const currentAmount = Number(amount);
+  const hasValidAmount = Number.isFinite(currentAmount) && currentAmount > 0;
+
+  const rankingAmount = frozenAmount ?? debouncedAmount;
+  const parsedRankingAmount = Number(rankingAmount);
+  const suggestionAmount =
+    Number.isFinite(parsedRankingAmount) && parsedRankingAmount > 0
+      ? parsedRankingAmount
+      : undefined;
+
+  // Refresh the clock each time the dialog opens so decay and time-of-day
+  // weights are not frozen from a session that has been idle for hours.
+  useEffect(() => {
+    if (isDialogOpen) setSuggestionNow(new Date());
+  }, [isDialogOpen]);
+
+  const categoryProfile = useMemo(
+    () => buildCategoryProfile(expenseRecords, categories, suggestionNow),
+    [expenseRecords, categories, suggestionNow],
+  );
+
+  const suggestions = useMemo(
+    () =>
+      rankCategorySuggestions(categoryProfile, {
+        now: suggestionNow,
+        amount: suggestionAmount,
+      }),
+    [categoryProfile, suggestionAmount, suggestionNow],
+  );
+
+  useEffect(() => {
+    if (!isDialogOpen) return;
+    setFrozenAmount(null);
+
+    if (updateId) {
       const record = getExpenseRecord(updateId);
       if (record) {
         form.setValue("amount", String(record.amount));
-        form.setValue("description", record.description);
+        form.setValue("category", record.category);
+        form.setValue("notes", record.notes);
+        setDebouncedAmount(String(record.amount));
+        setShowNotes(Boolean(record.notes));
       } else {
         setUpdateId(null);
       }
-    } else if (!updateId && isDialogOpen) {
+    } else {
       form.reset();
+      setDebouncedAmount("");
+      setShowNotes(false);
     }
   }, [updateId, isDialogOpen]);
 
@@ -163,33 +230,75 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
     setIsDialogOpen(open);
     if (!open) {
       setUpdateId(null);
+      setShowNotes(false);
       form.reset();
     }
   };
 
-  const onSubmit = form.handleSubmit(async (data) => {
+  const persistExpense = (data: ExpenseRecordForm): boolean => {
     try {
       expenseRecordForm.parse(data);
+
+      const resolvedCategory =
+        data.category?.trim() || UNCATEGORIZED_CATEGORY;
+      const notes = data.notes?.trim() ?? "";
+
+      // Whatever the user typed becomes a category they can pick next time.
+      addCategory(resolvedCategory);
+
       if (updateId) {
         updateExpense(updateId, {
           datetime: updateId,
           amount: Number(data.amount),
-          description: String(data.description),
+          category: resolvedCategory,
+          notes,
         });
         setUpdateId(null);
       } else {
         addExpense(
           Number(data.amount),
-          data.description,
+          resolvedCategory,
+          notes,
           buildDatetimeForFilter(filter)
         );
       }
-      form.reset();
-      setIsDialogOpen(false);
+      return true;
     } catch (error) {
       console.error(error);
+      return false;
     }
+  };
+
+  const closeAfterSave = () => {
+    form.reset();
+    setShowNotes(false);
+    setIsDialogOpen(false);
+  };
+
+  const onSubmit = form.handleSubmit((data) => {
+    if (!persistExpense(data)) return;
+    closeAfterSave();
   });
+
+  const handleSuggestionPick = (nextCategory: string) => {
+    form.setValue("category", nextCategory, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    // Editing an existing record still goes through the explicit save button.
+    if (updateId) return;
+
+    if (!hasValidAmount) {
+      form.setFocus("amount");
+      return;
+    }
+
+    if (!persistExpense({ ...form.getValues(), category: nextCategory })) {
+      return;
+    }
+    closeAfterSave();
+  };
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
@@ -198,6 +307,9 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
         title="Add Expense"
         onClick={() => {
           setUpdateId(null);
+          setShowNotes(false);
+          setFrozenAmount(null);
+          setDebouncedAmount("");
           form.reset();
         }}
       >
@@ -236,18 +348,69 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
               )}
             </div>
 
-            <div className="flex flex-col w-full">
-              <label htmlFor="description">Description</label>
-              <Input
-                type="text"
-                {...form.register("description")}
-                placeholder={"e.g. Lunch"}
-                className="p-2 my-2 border border-input rounded-md"
+            <div className="w-full my-1">
+              <CategorySuggestionChips
+                suggestions={suggestions}
+                selectedCategory={category}
+                canRecord={hasValidAmount}
+                onPick={handleSuggestionPick}
+                onInteractionStart={() => setFrozenAmount(debouncedAmount)}
+                onInteractionEnd={() => setFrozenAmount(null)}
               />
-              {form.formState.errors.amount && (
-                <p className="text-app-error-500 text-sm">
-                  {form.formState.errors.amount.message}
-                </p>
+            </div>
+
+            <div className="flex flex-col w-full">
+              <label htmlFor="category">Category</label>
+              <CategoryCombobox
+                id="category"
+                value={category}
+                onChange={(next) =>
+                  form.setValue("category", next, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                onCreate={addCategory}
+                categories={categories}
+                placeholder="e.g. Food"
+              />
+            </div>
+
+            <div className="flex flex-col w-full">
+              {showNotes ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="notes">Note</label>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        setShowNotes(false);
+                        form.setValue("notes", "");
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                      Remove note
+                    </button>
+                  </div>
+                  <Input
+                    id="notes"
+                    type="text"
+                    {...form.register("notes")}
+                    placeholder="e.g. Lunch with the team"
+                    className="p-2 my-2 border border-input rounded-md"
+                    autoFocus
+                  />
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="flex items-center gap-1 self-start my-1 text-sm text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowNotes(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add note
+                </button>
               )}
             </div>
 

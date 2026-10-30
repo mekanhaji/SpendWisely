@@ -1,6 +1,11 @@
 import type { ThemePreference, UserSettings } from "@/store";
 
-export type SettingId = "theme" | "currency" | "dailyLimit" | "warningLimit";
+export type SettingId =
+  | "theme"
+  | "currency"
+  | "dailyLimit"
+  | "warningLimit"
+  | "categories";
 
 export type SettingDefinition = {
   id: SettingId;
@@ -44,5 +49,11 @@ export const settingList: SettingDefinition[] = [
     id: "warningLimit",
     title: "Daily Expense Warning",
     description: () => "When should I warn you? 🚨",
+  },
+  {
+    id: "categories",
+    title: "Categories",
+    description: () =>
+      "Add, rename or remove the categories you file your expenses under 🗂️",
   },
 ];
