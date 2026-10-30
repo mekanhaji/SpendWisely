@@ -313,6 +313,26 @@ const usePwaInstallStore = create<PwaInstallStore>((set, get) => ({
   },
 }));
 
+/** Prefill for the add-expense sheet, e.g. from the Web Share Target. */
+export type AddExpenseIntent = { amount?: string; notes?: string };
+
+export type AddIntentStore = {
+  intent: AddExpenseIntent | null;
+  request: (intent: AddExpenseIntent) => void;
+  consume: () => void;
+};
+
+/**
+ * Hand-off between the /add route (shortcut or share target) and Home, which
+ * owns the sheet. Home is re-created by the redirect, so the request has to
+ * live outside it.
+ */
+const useAddIntentStore = create<AddIntentStore>((set) => ({
+  intent: null,
+  request: (intent) => set({ intent }),
+  consume: () => set({ intent: null }),
+}));
+
 export type PwaUpdateStore = {
   waitingWorker: ServiceWorker | null;
   setWaitingWorker: (worker: ServiceWorker | null) => void;
@@ -338,6 +358,7 @@ const usePwaUpdateStore = create<PwaUpdateStore>((set, get) => ({
 }));
 
 export {
+  useAddIntentStore,
   useExpenseStore,
   usePwaInstallStore,
   usePwaUpdateStore,

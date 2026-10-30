@@ -20,7 +20,19 @@
       href="icons/favicon-16x16.png"
     />
     <link rel="manifest" href="manifest.json" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover lets the layout draw under the notch and home bar
+         (padded back with env(safe-area-inset-*)); resizes-content keeps
+         bottom sheets above the Android keyboard. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- "default" keeps the iOS status bar readable on both themes;
+         black-translucent paints white text over the cream light background. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Spend Wisely" />
     <!-- Updates to match the chrome around the page: dark hex mirrors
          --background in index.css exactly, light hex matches theme_color in
          manifest.json. Chrome paints the PWA's status bar from this meta; the

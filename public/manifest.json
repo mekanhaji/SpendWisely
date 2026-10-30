@@ -1,38 +1,40 @@
 {
+  "id": "/",
   "name": "Spend Wisely",
   "short_name": "Spend Wisely",
   "start_url": "/",
   "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "orientation": "portrait",
+  "categories": ["finance", "productivity"],
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
   "icons": [
     {
       "src": "icons/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icons/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "icons/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/favicon-16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/favicon-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "theme_color": "#F5F3ED",
   "background_color": "#F5F3ED",
-  "display": "standalone",
   "description": "Track daily spending against your limit with warnings before you overshoot.",
   "screenshots": [
     {
@@ -52,10 +54,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Settings",
-      "short_name": "Settings",
-      "description": "Limits, currency and theme",
-      "url": "/settings",
+      "name": "Add expense",
+      "short_name": "Add",
+      "description": "Record a new expense",
+      "url": "/add",
       "icons": [
         {
           "src": "icons/android-chrome-192x192.png",
@@ -76,6 +78,28 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Settings",
+      "short_name": "Settings",
+      "description": "Limits, currency and theme",
+      "url": "/settings",
+      "icons": [
+        {
+          "src": "icons/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/add",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

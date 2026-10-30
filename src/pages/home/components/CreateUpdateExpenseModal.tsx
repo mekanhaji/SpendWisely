@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useExpenseStore } from "@/store";
+import { useExpenseStore, type AddExpenseIntent } from "@/store";
 import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -41,6 +41,8 @@ type CreateUpdateExpenseModalProps = {
   updateId: string | null;
   setUpdateId: React.Dispatch<React.SetStateAction<string | null>>;
   filter: ExpenseFilter;
+  /** Amount and note to start a new expense with (shortcut / share target). */
+  prefill?: AddExpenseIntent | null;
 };
 
 const getCreateTargetDate = (filter: ExpenseFilter): Date => {
@@ -145,8 +147,14 @@ const buildDatetimeForFilter = (filter: ExpenseFilter): string => {
 };
 
 const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
-  const { isDialogOpen, setIsDialogOpen, setUpdateId, updateId, filter } =
-    props;
+  const {
+    isDialogOpen,
+    setIsDialogOpen,
+    setUpdateId,
+    updateId,
+    filter,
+    prefill,
+  } = props;
   const {
     addExpense,
     updateExpense,
@@ -223,6 +231,15 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
       form.reset();
       setDebouncedAmount("");
       setShowNotes(false);
+
+      if (prefill?.amount) {
+        form.setValue("amount", prefill.amount);
+        setDebouncedAmount(prefill.amount);
+      }
+      if (prefill?.notes) {
+        form.setValue("notes", prefill.notes);
+        setShowNotes(true);
+      }
     }
   }, [updateId, isDialogOpen]);
 
