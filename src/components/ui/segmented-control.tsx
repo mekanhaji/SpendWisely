@@ -39,7 +39,7 @@ const SegmentedControl = <T extends string>({
           aria-pressed={active}
           onClick={() => onChange(option.value)}
           className={cn(
-            "h-9 min-w-0 flex-1 truncate rounded-lg px-3 text-sm font-medium transition duration-150",
+            "h-9 min-w-0 flex-1 truncate rounded-lg px-2 text-sm font-medium transition duration-150",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             active
               ? "bg-card text-foreground shadow-card"

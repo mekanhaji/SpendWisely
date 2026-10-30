@@ -6,6 +6,7 @@ export type AppChartColors = {
   limit: string;
   over: string;
   gridText: string;
+  grid: string;
 };
 
 const readVar = (name: string) =>
@@ -16,6 +17,7 @@ const readColors = (): AppChartColors => ({
   limit: `rgb(${readVar("--app-warning-500")})`,
   over: `rgb(${readVar("--app-error-500")})`,
   gridText: `hsl(${readVar("--muted-foreground")})`,
+  grid: `hsl(${readVar("--border")} / 0.6)`,
 });
 
 export const useAppChartColors = (): AppChartColors => {

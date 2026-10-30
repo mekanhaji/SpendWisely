@@ -54,6 +54,65 @@ export const isStoragePersisted = async (): Promise<boolean> => {
   }
 };
 
+export type ShareResult = "shared" | "copied" | "cancelled" | "failed";
+
+/**
+ * Share text through the system share sheet, or copy it where there is none
+ * (most desktop browsers).
+ */
+export const shareText = async (
+  text: string,
+  title?: string,
+): Promise<ShareResult> => {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text });
+      return "shared";
+    } catch (error) {
+      if ((error as DOMException).name === "AbortError") return "cancelled";
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+};
+
+/**
+ * Hand a file to the user: the share sheet on phones (save to Files, send to
+ * Drive, WhatsApp...), a normal download everywhere else. Desktop browsers
+ * that can share files still get a download, since a share popup is an odd
+ * way to save a backup.
+ */
+export const shareOrDownloadFile = async (
+  file: File,
+): Promise<"shared" | "downloaded" | "cancelled"> => {
+  const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+
+  if (isTouchDevice && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: file.name });
+      return "shared";
+    } catch (error) {
+      if ((error as DOMException).name === "AbortError") return "cancelled";
+      // Any other failure falls back to a download below.
+    }
+  }
+
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = file.name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return "downloaded";
+};
+
 /** Dot on the home-screen icon while today is over the daily limit. */
 export const updateAppBadge = (isOverBudget: boolean): void => {
   const nav = navigator as BadgeNavigator;

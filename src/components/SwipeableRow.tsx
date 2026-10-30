@@ -12,6 +12,11 @@ const SLIDE_OUT_MS = 180;
 type SwipeableRowProps = {
   children: React.ReactNode;
   onSwipeDelete: () => void;
+  /**
+   * Spring back after the swipe instead of sliding out. For deletes that ask
+   * for confirmation first, where the row has to stay if the user cancels.
+   */
+  snapBack?: boolean;
   className?: string;
 };
 
@@ -24,6 +29,7 @@ type SwipeableRowProps = {
 const SwipeableRow = ({
   children,
   onSwipeDelete,
+  snapBack = false,
   className,
 }: SwipeableRowProps) => {
   const [offset, setOffset] = useState(0);
@@ -95,8 +101,13 @@ const SwipeableRow = ({
 
     setDragging(false);
     if (offsetRef.current <= -DELETE_THRESHOLD) {
-      move(-(rowRef.current?.offsetWidth ?? 0));
-      window.setTimeout(onSwipeDelete, SLIDE_OUT_MS);
+      if (snapBack) {
+        move(0);
+        onSwipeDelete();
+      } else {
+        move(-(rowRef.current?.offsetWidth ?? 0));
+        window.setTimeout(onSwipeDelete, SLIDE_OUT_MS);
+      }
     } else {
       move(0);
     }

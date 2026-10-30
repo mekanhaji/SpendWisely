@@ -1,5 +1,6 @@
 import { Chart } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { parseLocalISODate } from "@/lib/expense-filter";
 import type { DailyTotal } from "@/lib/expense-analytics";
 import { useAppChartColors } from "@/hooks/useAppChartColors";
@@ -7,6 +8,7 @@ import { useAppChartColors } from "@/hooks/useAppChartColors";
 type SpendingTrendChartProps = {
   dailyTotals: DailyTotal[];
   dailyLimit: number;
+  currency: string;
 };
 
 const formatTickLabel = (iso: string): string => {
@@ -18,10 +20,12 @@ const formatTickLabel = (iso: string): string => {
 const SpendingTrendChart = ({
   dailyTotals,
   dailyLimit,
+  currency,
 }: SpendingTrendChartProps) => {
   const colors = useAppChartColors();
   const isEmpty = dailyTotals.every((d) => d.total === 0);
   const maxValue = Math.max(dailyLimit, ...dailyTotals.map((d) => d.total));
+  const showLimit = dailyLimit > 0;
 
   const data: ChartData<"bar" | "line"> = {
     labels: dailyTotals.map((d) => formatTickLabel(d.date)),
@@ -30,10 +34,15 @@ const SpendingTrendChart = ({
         type: "bar" as const,
         label: "Spent",
         data: dailyTotals.map((d) => d.total),
-        backgroundColor: colors.spend,
-        borderRadius: 4,
+        // Days at or over the limit stand out without needing a legend.
+        backgroundColor: dailyTotals.map((d) =>
+          showLimit && d.total >= dailyLimit ? colors.over : colors.spend,
+        ),
+        borderRadius: 6,
+        borderSkipped: false,
+        maxBarThickness: 36,
       },
-      ...(dailyLimit > 0
+      ...(showLimit
         ? [
             {
               type: "line" as const,
@@ -52,17 +61,32 @@ const SpendingTrendChart = ({
   const options: ChartOptions<"bar" | "line"> = {
     responsive: true,
     maintainAspectRatio: false,
+    font: { family: '"Inter Variable", system-ui, sans-serif' },
     plugins: {
-      legend: { labels: { color: colors.gridText } },
-      tooltip: { enabled: true },
+      // The dashed line is explained in the card header instead.
+      legend: { display: false },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: (item) => `${item.dataset.label}: ${currency}${item.parsed.y}`,
+        },
+      },
     },
     scales: {
       x: {
-        ticks: { color: colors.gridText, autoSkip: true, maxRotation: 0 },
+        ticks: {
+          color: colors.gridText,
+          autoSkip: true,
+          maxRotation: 0,
+          maxTicksLimit: 7,
+        },
         grid: { display: false },
+        border: { display: false },
       },
       y: {
-        ticks: { color: colors.gridText },
+        ticks: { color: colors.gridText, maxTicksLimit: 5 },
+        grid: { color: colors.grid },
+        border: { display: false },
         beginAtZero: true,
         suggestedMax: maxValue > 0 ? maxValue * 1.15 : undefined,
       },
@@ -70,16 +94,34 @@ const SpendingTrendChart = ({
   };
 
   return (
-    <div className="relative w-full h-64">
-      <Chart type="bar" data={data} options={options} />
-      {isEmpty && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-sm text-muted-foreground">
-            No expenses in this period
+    <Card className="w-full">
+      <CardHeader className="flex-row items-baseline justify-between gap-2">
+        <CardTitle>Daily spending</CardTitle>
+        {showLimit && (
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span
+              aria-hidden="true"
+              className="inline-block h-0 w-4 border-t-2 border-dashed"
+              style={{ borderColor: colors.limit }}
+            />
+            Limit {currency}
+            {dailyLimit}
           </span>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="relative h-56 w-full">
+          <Chart type="bar" data={data} options={options} />
+          {isEmpty && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <span className="text-sm text-muted-foreground">
+                No expenses in this period
+              </span>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

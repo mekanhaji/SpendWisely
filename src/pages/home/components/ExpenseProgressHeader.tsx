@@ -10,36 +10,10 @@ import {
   percentageOfLimit,
 } from "@/lib/expense-analytics";
 import {
+  describeFilter,
   isSingleDayFilter,
-  parseLocalISODate,
   type ExpenseFilter,
 } from "@/lib/expense-filter";
-
-const formatShort = (iso?: string): string => {
-  const date = iso ? parseLocalISODate(iso) : null;
-  return date
-    ? date.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
-    : "";
-};
-
-const describeFilter = (filter: ExpenseFilter): string => {
-  switch (filter.mode) {
-    case "today":
-      return "Today";
-    case "yesterday":
-      return "Yesterday";
-    case "week":
-      return "This week";
-    case "month":
-      return "This month";
-    case "all":
-      return "All time";
-    case "custom":
-      return filter.from === filter.to
-        ? formatShort(filter.from)
-        : `${formatShort(filter.from)} - ${formatShort(filter.to)}`;
-  }
-};
 
 /**
  * Budget hero scoped to the active filter. Single days show what is left of

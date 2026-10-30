@@ -89,6 +89,16 @@ export type ExpenseStore = {
    * @returns
    */
   restoreExpense: (record: ExpenseRecord) => void;
+  /**
+   * Replace every expense and category (used when importing a backup).
+   *
+   * @param data
+   * @returns
+   */
+  replaceAll: (data: {
+    expenseRecords: ExpenseRecord[];
+    categories: string[];
+  }) => void;
 };
 
 const createExpenseRecord = (
@@ -224,6 +234,14 @@ const useExpenseStore = create(
             expenseRecords: [...state.expenseRecords, record],
             categories: mergeCategoryNames(state.categories, [record.category]),
           };
+        }),
+      replaceAll: ({ expenseRecords, categories }) =>
+        set({
+          expenseRecords,
+          categories: mergeCategoryNames(
+            categories.length > 0 ? categories : DEFAULT_CATEGORIES,
+            expenseRecords.map((record) => record.category),
+          ),
         }),
     }),
     {

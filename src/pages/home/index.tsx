@@ -50,7 +50,7 @@ const Home = () => {
           showTrigger={tabFromPath(pathname) !== "settings"}
         />
         <TabsContent value="home" className="w-full">
-          <div className="my-2 flex flex-col items-center gap-4">
+          <div className="my-2 flex w-full flex-col items-center gap-4">
             <ExpenseProgressHeader filter={filter} />
 
             <ExpenseRecordsList
@@ -62,8 +62,8 @@ const Home = () => {
             />
           </div>
         </TabsContent>
-        <TabsContent value="analytics">
-          <div className="my-2 flex flex-col items-center gap-4">
+        <TabsContent value="analytics" className="w-full">
+          <div className="my-2 flex w-full flex-col items-center gap-4">
             <Analytics
               setIsDialogOpen={setIsDialogOpen}
               setUpdateId={setUpdateId}
@@ -71,7 +71,7 @@ const Home = () => {
             />
           </div>
         </TabsContent>
-        <TabsContent value="settings">
+        <TabsContent value="settings" className="w-full">
           <Settings />
         </TabsContent>
       </main>
