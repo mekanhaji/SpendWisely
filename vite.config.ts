@@ -32,12 +32,13 @@ const listFiles = (dir: string, urlPrefix: string): string[] =>
 
 /**
  * Files the service worker caches up front so the app opens offline on the
- * very first visit to any route. Font subsets other than latin are skipped:
- * the browser only downloads them for characters this app never shows.
+ * very first visit to any route. Inter ships one file per script; only latin
+ * and latin-ext are kept (latin-ext holds the rupee sign), the rest cover
+ * characters this app never shows.
  */
 const getPrecacheUrls = (distDir: string): string[] => {
   const assets = listFiles(path.join(distDir, "assets"), "/assets").filter(
-    (url) => !/\.woff2?$/.test(url) || /-latin-wght-normal/.test(url),
+    (url) => !/\.woff2?$/.test(url) || /-latin(-ext)?-wght-normal/.test(url),
   );
   const icons = listFiles(path.join(distDir, "icons"), "/icons");
   return ["/", "/index.html", "/manifest.json", ...icons, ...assets];

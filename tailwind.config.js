@@ -12,11 +12,44 @@ const channelRamp = (prefix) =>
     ]),
   );
 
+// Category avatar tones. Defined as bg/fg pairs in index.css; the 1..6 keys
+// are picked by CategoryAvatar from a hash of the category name.
+const categoryTones = Object.fromEntries(
+  [1, 2, 3, 4, 5, 6].map((n) => [
+    n,
+    {
+      bg: `rgb(var(--cat-${n}-bg) / <alpha-value>)`,
+      fg: `rgb(var(--cat-${n}-fg) / <alpha-value>)`,
+    },
+  ]),
+);
+
 export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        // Variable Inter from @fontsource-variable/inter, imported in main.tsx.
+        sans: [
+          '"Inter Variable"',
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        float: "var(--shadow-float)",
+      },
+      // Notch / home-bar insets, e.g. pt-safe-top, pb-safe-bottom.
+      spacing: {
+        "safe-top": "env(safe-area-inset-top)",
+        "safe-bottom": "env(safe-area-inset-bottom)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -58,8 +91,12 @@ export default {
         border: "hsl(var(--border) / <alpha-value>)",
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
-        // Secondary brand (clay). Not consumed yet.
-        brand: "rgb(var(--brand) / <alpha-value>)",
+        // Secondary brand (clay): FAB, active tab, "likely match" highlights.
+        brand: {
+          DEFAULT: "rgb(var(--brand) / <alpha-value>)",
+          foreground: "rgb(var(--brand-foreground) / <alpha-value>)",
+        },
+        cat: categoryTones,
         app: {
           ...channelRamp("--app"),
           foreground: "rgb(var(--app-foreground) / <alpha-value>)",

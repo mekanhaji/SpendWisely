@@ -333,6 +333,44 @@ const useAddIntentStore = create<AddIntentStore>((set) => ({
   consume: () => set({ intent: null }),
 }));
 
+export type Toast = {
+  id: number;
+  message: string;
+  /** Label of the optional action button, e.g. "Undo". */
+  actionLabel?: string;
+  onAction?: () => void;
+  /** Milliseconds before it dismisses itself. Zero keeps it until dismissed. */
+  duration: number;
+};
+
+export type ToastInput = Omit<Toast, "id" | "duration"> & {
+  duration?: number;
+};
+
+export type ToastStore = {
+  toasts: Toast[];
+  show: (toast: ToastInput) => number;
+  dismiss: (id: number) => void;
+};
+
+const DEFAULT_TOAST_DURATION = 5000;
+let nextToastId = 1;
+
+const useToastStore = create<ToastStore>((set) => ({
+  toasts: [],
+  show: ({ duration = DEFAULT_TOAST_DURATION, ...toast }) => {
+    const id = nextToastId++;
+    set((state) => ({
+      toasts: [...state.toasts, { ...toast, id, duration }],
+    }));
+    return id;
+  },
+  dismiss: (id) =>
+    set((state) => ({
+      toasts: state.toasts.filter((toast) => toast.id !== id),
+    })),
+}));
+
 export type PwaUpdateStore = {
   waitingWorker: ServiceWorker | null;
   setWaitingWorker: (worker: ServiceWorker | null) => void;
@@ -362,5 +400,6 @@ export {
   useExpenseStore,
   usePwaInstallStore,
   usePwaUpdateStore,
+  useToastStore,
   useUserSettingsStore,
 };
