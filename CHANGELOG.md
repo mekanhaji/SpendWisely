@@ -8,6 +8,7 @@ All notable changes to Spend Wisely are documented here.
 
 - **New look.** Inter replaces the monospace font, with tabular numbers for amounts. Screens use cards and grouped lists, the clay accent is now used, and dark mode keeps the same structure.
 - **App-style navigation.** A slim top bar and a bottom tab bar replace the large title and top tabs. The add button sits above the tab bar, on the thumb side. Tab and page changes cross-fade.
+- **Tablet and desktop layout.** From 768px wide, a slim icon rail (icons with labels underneath, plus the Add button) sits beside the centered content instead of the bottom bar. The content column is wider, Analytics uses a two-column grid on large screens, sheets open as centered dialogs, and toasts appear bottom-right. Phones are unchanged. The app no longer locks to portrait, so installed tablets can rotate.
 - **Home.** The budget header now shows what is left of the daily limit (or how far over). Filters are one scrollable row. Expenses are grouped by day with sticky day headers and day totals.
 - **Add and edit** open as a bottom sheet with a large amount field. Save stays disabled until the amount is valid, so an empty amount can no longer be saved as 0.
 - **Analytics.** New "By category" breakdown, over-limit days are highlighted in the chart, and a Share button sends a text summary (or copies it where sharing is not available).

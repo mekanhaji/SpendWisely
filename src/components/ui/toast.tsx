@@ -46,7 +46,7 @@ const Toaster = () => {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-[60] mx-auto flex max-w-[625px] flex-col gap-2 pl-4 pr-[5.5rem]"
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-[60] mx-auto flex max-w-[625px] flex-col gap-2 pl-4 pr-[5.5rem] md:inset-x-auto md:bottom-6 md:right-6 md:mx-0 md:w-96 md:max-w-none md:px-0"
     >
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} />

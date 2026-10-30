@@ -345,8 +345,9 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
   return (
     <Drawer open={isDialogOpen} onOpenChange={handleOpenChange}>
       {showTrigger && (
-        // Docked above the tab bar, on the thumb side, inside the app column.
-        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[625px] justify-end px-4">
+        // Phones only: docked above the tab bar, on the thumb side. From md up the
+        // sidebar has the add button.
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[625px] justify-end px-4 md:hidden">
           <DrawerTrigger
             className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-float transition duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             title="Add Expense"

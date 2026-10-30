@@ -6,7 +6,6 @@
   "scope": "/",
   "lang": "en",
   "dir": "ltr",
-  "orientation": "portrait",
   "categories": ["finance", "productivity"],
   "display": "standalone",
   "display_override": ["standalone"],

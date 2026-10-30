@@ -142,7 +142,7 @@ const Categories = () => {
                 type="button"
                 onClick={() => startRename(category)}
                 aria-label={`Edit ${category}, ${usage} expense${usage === 1 ? "" : "s"}`}
-                className="flex w-full items-center gap-3 bg-card px-4 py-3 text-left transition-colors active:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                className="flex w-full items-center gap-3 bg-card px-4 py-3 text-left transition-colors hover:bg-accent/50 active:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               >
                 <CategoryAvatar category={category} />
                 <span className="min-w-0 flex-1">

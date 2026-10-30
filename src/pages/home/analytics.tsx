@@ -88,14 +88,16 @@ const Analytics = (props: AnalyticsProps) => {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <ExpenseRecordsFilter
-        filter={filter}
-        setFilter={setFilter}
-        modes={ANALYTICS_FILTER_MODES}
-      />
+    <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="lg:col-span-2">
+        <ExpenseRecordsFilter
+          filter={filter}
+          setFilter={setFilter}
+          modes={ANALYTICS_FILTER_MODES}
+        />
+      </div>
 
-      <div className="-mb-2 flex items-center justify-between">
+      <div className="-mb-2 flex items-center justify-between lg:col-span-2">
         <h2 className="text-sm font-semibold">{describeFilter(filter)}</h2>
         <Button
           variant="ghost"
@@ -109,13 +111,17 @@ const Analytics = (props: AnalyticsProps) => {
         </Button>
       </div>
 
-      <AnalyticsSummaryStats stats={summaryStats} currency={currency} />
+      <div className="lg:col-span-2">
+        <AnalyticsSummaryStats stats={summaryStats} currency={currency} />
+      </div>
 
-      <SpendingTrendChart
-        dailyTotals={dailyTotals}
-        dailyLimit={dailyLimit}
-        currency={currency}
-      />
+      <div className="lg:col-span-2">
+        <SpendingTrendChart
+          dailyTotals={dailyTotals}
+          dailyLimit={dailyLimit}
+          currency={currency}
+        />
+      </div>
 
       <CategoryBreakdownCard categories={categoryTotals} currency={currency} />
 
@@ -125,15 +131,17 @@ const Analytics = (props: AnalyticsProps) => {
         currency={currency}
       />
 
-      <TopExpensesList
-        expenses={topExpenses}
-        currency={currency}
-        onEdit={(datetime) => {
-          setUpdateId(datetime);
-          setIsDialogOpen(true);
-        }}
-        onDelete={deleteExpense}
-      />
+      <div className="lg:col-span-2">
+        <TopExpensesList
+          expenses={topExpenses}
+          currency={currency}
+          onEdit={(datetime) => {
+            setUpdateId(datetime);
+            setIsDialogOpen(true);
+          }}
+          onDelete={deleteExpense}
+        />
+      </div>
     </div>
   );
 };

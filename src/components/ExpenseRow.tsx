@@ -37,7 +37,7 @@ const ExpenseRow = ({
       onClick={onEdit}
       aria-label={`Edit ${record.category}, ${currency}${record.amount}`}
       className={cn(
-        "flex w-full items-center gap-3 bg-card px-4 py-3 text-left transition-colors active:bg-accent",
+        "flex w-full items-center gap-3 bg-card px-4 py-3 text-left transition-colors hover:bg-accent/50 active:bg-accent",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
         className,
       )}

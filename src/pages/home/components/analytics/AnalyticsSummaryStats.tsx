@@ -40,7 +40,7 @@ const AnalyticsSummaryStats = ({
   const hasData = stats.transactionCount > 0;
 
   return (
-    <div className="grid w-full grid-cols-2 gap-3">
+    <div className="grid w-full grid-cols-2 gap-3 lg:grid-cols-4">
       <Tile label="Total spent" value={`${currency}${stats.total}`} />
       <Tile
         label="Average / day"

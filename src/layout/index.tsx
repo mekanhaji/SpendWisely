@@ -1,28 +1,26 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  ChartPie,
-  ChevronLeft,
-  House,
-  Settings,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import Toaster from "@/components/ui/toast";
 import UpdateAppToast from "@/components/UpdateAppToast";
 import { cn } from "@/lib/utils";
+import Sidebar from "./Sidebar";
+import { NAV_ITEMS } from "./nav-items";
 import { TAB_PATHS, tabFromPath, type TabValue } from "./tabs";
-
-const NAV_ITEMS: { tab: TabValue; label: string; icon: LucideIcon }[] = [
-  { tab: "home", label: "Home", icon: House },
-  { tab: "analytics", label: "Analytics", icon: ChartPie },
-  { tab: "settings", label: "Settings", icon: Settings },
-];
 
 const TAB_TITLES: Record<TabValue, string> = {
   home: "Spend Wisely",
   analytics: "Analytics",
   settings: "Settings",
+};
+
+/**
+ * From md up the brand lives in the sidebar, so the Home page is just "Home".
+ * Tabs without an entry keep their normal title.
+ */
+const TAB_DESKTOP_TITLES: Partial<Record<TabValue, string>> = {
+  home: "Home",
 };
 
 type HeaderProps = {
@@ -50,7 +48,12 @@ type AppLayoutProps = {
   headerOptions?: HeaderProps;
 };
 
-const TopBar = ({ title, back }: Required<Pick<HeaderProps, "title">> & Pick<HeaderProps, "back">) => {
+const TopBar = ({
+  title,
+  desktopTitle,
+  back,
+}: Required<Pick<HeaderProps, "title">> &
+  Pick<HeaderProps, "back"> & { desktopTitle?: string }) => {
   const navigate = useNavigate();
 
   return (
@@ -59,7 +62,7 @@ const TopBar = ({ title, back }: Required<Pick<HeaderProps, "title">> & Pick<Hea
       style={{ viewTransitionName: "app-header" }}
       className="sticky top-0 z-30 bg-background/80 pt-safe-top backdrop-blur-md"
     >
-      <div className="flex h-14 items-center gap-1 px-4">
+      <div className="flex h-14 items-center gap-1 px-4 md:px-6">
         {back ? (
           <Button
             variant="ghost"
@@ -76,7 +79,14 @@ const TopBar = ({ title, back }: Required<Pick<HeaderProps, "title">> & Pick<Hea
           </Button>
         ) : null}
         <h1 className="cursor-default select-none truncate text-xl font-semibold tracking-tight">
-          {title}
+          {desktopTitle ? (
+            <>
+              <span className="md:hidden">{title}</span>
+              <span className="hidden md:inline">{desktopTitle}</span>
+            </>
+          ) : (
+            title
+          )}
         </h1>
       </div>
     </header>
@@ -87,7 +97,7 @@ const BottomNav = ({ current }: { current: TabValue }) => (
   <nav
     aria-label="Primary"
     style={{ viewTransitionName: "app-nav" }}
-    className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[625px] border-t bg-background/90 pb-safe-bottom backdrop-blur-md"
+    className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[625px] border-t bg-background/90 pb-safe-bottom backdrop-blur-md md:hidden"
   >
     <ul className="flex h-16 items-stretch">
       {NAV_ITEMS.map(({ tab, label, icon: Icon }) => {
@@ -126,15 +136,30 @@ const AppLayout = ({ children, headerOptions }: AppLayoutProps) => {
   const tab = tabFromPath(pathname);
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-[625px] flex-col">
-      <TopBar
-        title={headerOptions?.title ?? TAB_TITLES[tab]}
-        back={headerOptions?.back}
-      />
-      <UpdateAppToast />
-      {/* Bottom padding clears the tab bar and the add button above it. */}
-      <div className="flex-1 px-4 pb-[calc(10rem+env(safe-area-inset-bottom))]">
-        <Tabs value={tab}>{children}</Tabs>
+    // From md up the rail and the content column form one group, centered in
+    // the window, so the rail stays beside the content however wide it is.
+    <div className="md:flex md:justify-center md:gap-4 md:px-4">
+      <Sidebar current={tab} />
+      <div
+        className={cn(
+          "mx-auto flex min-h-dvh w-full max-w-[625px] flex-col md:mx-0 md:min-w-0 md:max-w-3xl md:flex-1",
+          // Analytics lays its cards out in two columns on large screens.
+          tab === "analytics" && "lg:max-w-4xl",
+        )}
+      >
+        <TopBar
+          title={headerOptions?.title ?? TAB_TITLES[tab]}
+          desktopTitle={
+            headerOptions?.title ? undefined : TAB_DESKTOP_TITLES[tab]
+          }
+          back={headerOptions?.back}
+        />
+        <UpdateAppToast />
+        {/* On phones the bottom padding clears the tab bar and the add
+            button above it; larger screens have neither. */}
+        <div className="flex-1 px-4 pb-[calc(10rem+env(safe-area-inset-bottom))] md:px-6 md:pb-10">
+          <Tabs value={tab}>{children}</Tabs>
+        </div>
       </div>
       <BottomNav current={tab} />
       <Toaster />
