@@ -5,6 +5,7 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import Home from "./pages/home";
+import Categories from "./pages/categories";
 import { TAB_PATHS } from "./layout";
 import {
   type BeforeInstallPromptEvent,
@@ -33,6 +34,10 @@ const router = createBrowserRouter([
   {
     path: TAB_PATHS.settings,
     element: <Home />,
+  },
+  {
+    path: "/settings/categories",
+    element: <Categories />,
   },
   {
     path: "/about",

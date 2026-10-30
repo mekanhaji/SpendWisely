@@ -65,6 +65,8 @@ export type ExpenseStore = {
    * @returns
    */
   addCategory: (category: string) => void;
+  renameCategory: (from: string, to: string) => void;
+  removeCategory: (category: string) => void;
   /**
    * Update the total expense
    *
@@ -125,6 +127,53 @@ const useExpenseStore = create(
           return categories.length === state.categories.length
             ? state
             : { categories };
+        }),
+      renameCategory: (from, to) =>
+        set((state) => {
+          const previous = from.trim();
+          const next = to.trim();
+          if (!previous || !next) return state;
+          const previousLower = previous.toLowerCase();
+          const nextLower = next.toLowerCase();
+          if (previousLower === nextLower) return state;
+
+          // Renaming onto an existing category merges both sets of records.
+          const target =
+            state.categories.find((c) => c.toLowerCase() === nextLower) ?? next;
+
+          const records = state.expenseRecords.map((record) =>
+            record.category.trim().toLowerCase() === previousLower
+              ? { ...record, category: target }
+              : record,
+          );
+
+          const categories = state.categories.filter(
+            (c) => c.trim().toLowerCase() !== previousLower,
+          );
+          if (!categories.some((c) => c.trim().toLowerCase() === nextLower)) {
+            categories.push(target);
+          }
+
+          return { expenseRecords: records, categories };
+        }),
+      removeCategory: (category) =>
+        set((state) => {
+          const name = category.trim();
+          // The fallback category is always available for uncategorised records.
+          if (name.toLowerCase() === UNCATEGORIZED_CATEGORY.toLowerCase()) {
+            return state;
+          }
+
+          return {
+            categories: state.categories.filter(
+              (c) => c.trim().toLowerCase() !== name.toLowerCase(),
+            ),
+            expenseRecords: state.expenseRecords.map((record) =>
+              record.category.trim().toLowerCase() === name.toLowerCase()
+                ? { ...record, category: UNCATEGORIZED_CATEGORY }
+                : record,
+            ),
+          };
         }),
       updateExpense: (timestamp, record) =>
         set((state) => {

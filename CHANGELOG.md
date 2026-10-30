@@ -9,6 +9,10 @@ All notable changes to Spend Wisely are documented here.
 - **Categories.** Expenses are now filed under a category instead of a free-text description. Pick one from the list or type a new name and create it inline — new categories are saved for next time.
 - **Notes.** An optional note can be attached to an expense via the "Add note" button in the add/edit dialog. Notes show under the category in the expense lists.
 
+### Added
+
+- **Category management page.** The Settings screen now links to a categories page where you can add, rename or delete the categories you file expenses under. Deleting a category moves its expenses to "Uncategorized".
+
 ### Changed
 
 - Existing expenses are migrated automatically, once, in the browser: each old description becomes that expense's category, and is copied into its note. No action needed and nothing is lost.

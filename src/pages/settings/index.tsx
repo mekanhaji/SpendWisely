@@ -1,11 +1,14 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { useUserSettingsStore } from "@/store";
 import InstallAppBanner from "./components/InstallAppBanner";
 import SettingsCard from "./components/SettingsCard";
 import { settingList, themeOptions, type SettingId } from "./setting";
 
 const Settings = () => {
+  const navigate = useNavigate();
   const userSettings = useUserSettingsStore();
 
   const controls: Record<SettingId, React.ReactNode> = {
@@ -59,6 +62,16 @@ const Settings = () => {
         placeholder="ex. 5"
         onChange={(e) => userSettings.updateWarningLimit(Number(e.target.value))}
       />
+    ),
+    categories: (
+      <button
+        type="button"
+        onClick={() => navigate("/settings/categories")}
+        className="px-3 py-1 text-sm rounded-md border border-border text-foreground transition-colors hover:bg-accent"
+      >
+        Manage
+        <ChevronRight className="h-4 w-4 ml-1" />
+      </button>
     ),
   };
 
