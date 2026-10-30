@@ -7,12 +7,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useExpenseStore } from "@/store";
-import { Plus } from "lucide-react";
-import { useEffect } from "react";
+import { Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import CategoryCombobox from "@/components/CategoryCombobox";
+import { UNCATEGORIZED_CATEGORY } from "@/lib/migrations/expense-migrations";
 import {
   getFirstOfThisMonth,
   getMondayOfThisWeek,
@@ -22,7 +24,8 @@ import {
 
 const expenseRecordForm = z.object({
   amount: z.string(),
-  description: z.string().optional(),
+  category: z.string(),
+  notes: z.string().optional(),
 });
 
 type ExpenseRecordForm = z.infer<typeof expenseRecordForm>;
@@ -139,23 +142,30 @@ const buildDatetimeForFilter = (filter: ExpenseFilter): string => {
 const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
   const { isDialogOpen, setIsDialogOpen, setUpdateId, updateId, filter } =
     props;
-  const { addExpense, updateExpense, getExpenseRecord } = useExpenseStore();
+  const { addExpense, updateExpense, getExpenseRecord, categories, addCategory } =
+    useExpenseStore();
+  const [showNotes, setShowNotes] = useState(false);
 
   const form = useForm<ExpenseRecordForm>({
     resolver: zodResolver(expenseRecordForm),
   });
+
+  const category = form.watch("category") ?? "";
 
   useEffect(() => {
     if (updateId && isDialogOpen) {
       const record = getExpenseRecord(updateId);
       if (record) {
         form.setValue("amount", String(record.amount));
-        form.setValue("description", record.description);
+        form.setValue("category", record.category);
+        form.setValue("notes", record.notes);
+        setShowNotes(Boolean(record.notes));
       } else {
         setUpdateId(null);
       }
     } else if (!updateId && isDialogOpen) {
       form.reset();
+      setShowNotes(false);
     }
   }, [updateId, isDialogOpen]);
 
@@ -163,6 +173,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
     setIsDialogOpen(open);
     if (!open) {
       setUpdateId(null);
+      setShowNotes(false);
       form.reset();
     }
   };
@@ -170,21 +181,32 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
   const onSubmit = form.handleSubmit(async (data) => {
     try {
       expenseRecordForm.parse(data);
+
+      const resolvedCategory =
+        data.category?.trim() || UNCATEGORIZED_CATEGORY;
+      const notes = data.notes?.trim() ?? "";
+
+      // Whatever the user typed becomes a category they can pick next time.
+      addCategory(resolvedCategory);
+
       if (updateId) {
         updateExpense(updateId, {
           datetime: updateId,
           amount: Number(data.amount),
-          description: String(data.description),
+          category: resolvedCategory,
+          notes,
         });
         setUpdateId(null);
       } else {
         addExpense(
           Number(data.amount),
-          data.description,
+          resolvedCategory,
+          notes,
           buildDatetimeForFilter(filter)
         );
       }
       form.reset();
+      setShowNotes(false);
       setIsDialogOpen(false);
     } catch (error) {
       console.error(error);
@@ -198,6 +220,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
         title="Add Expense"
         onClick={() => {
           setUpdateId(null);
+          setShowNotes(false);
           form.reset();
         }}
       >
@@ -237,17 +260,57 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
             </div>
 
             <div className="flex flex-col w-full">
-              <label htmlFor="description">Description</label>
-              <Input
-                type="text"
-                {...form.register("description")}
-                placeholder={"e.g. Lunch"}
-                className="p-2 my-2 border border-input rounded-md"
+              <label htmlFor="category">Category</label>
+              <CategoryCombobox
+                id="category"
+                value={category}
+                onChange={(next) =>
+                  form.setValue("category", next, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                onCreate={addCategory}
+                categories={categories}
+                placeholder="e.g. Food"
               />
-              {form.formState.errors.amount && (
-                <p className="text-app-error-500 text-sm">
-                  {form.formState.errors.amount.message}
-                </p>
+            </div>
+
+            <div className="flex flex-col w-full">
+              {showNotes ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="notes">Note</label>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        setShowNotes(false);
+                        form.setValue("notes", "");
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                      Remove note
+                    </button>
+                  </div>
+                  <Input
+                    id="notes"
+                    type="text"
+                    {...form.register("notes")}
+                    placeholder="e.g. Lunch with the team"
+                    className="p-2 my-2 border border-input rounded-md"
+                    autoFocus
+                  />
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="flex items-center gap-1 self-start my-1 text-sm text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowNotes(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add note
+                </button>
               )}
             </div>
 

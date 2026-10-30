@@ -57,7 +57,7 @@ const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
         <ItemCardLayout key={record.datetime} className="w-full">
           <div className="flex flex-col justify-between">
             <div className="flex gap-5 items-center">
-              <h2 className="text-2xl">{record.description}</h2>
+              <h2 className="text-2xl">{record.category}</h2>
               <div className="flex gap-3">
                 <Pencil
                   className="h-4 w-4 text-app-700 cursor-pointer"
@@ -72,6 +72,13 @@ const ExpenseRecordsList = (props: ExpenseRecordsListProps) => {
                 />
               </div>
             </div>
+            {/* Migrated records have the old description as both category and
+                note, so skip the duplicate line. */}
+            {record.notes && record.notes !== record.category && (
+              <p className="text-sm text-muted-foreground line-clamp-1">
+                {record.notes}
+              </p>
+            )}
             <span className="flex items-center gap-2 uppercase">
               <Clock12Icon className="h-4 w-4" />{" "}
               {showDate ? formatDateTime(record.datetime) : formatTime(record.datetime)}

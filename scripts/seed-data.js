@@ -35,30 +35,30 @@
 
   /** Everyday catalogue, kept ₹-flavour consistent with the original seed. */
   const LIGHT = [
-    { description: "Morning Chai", amount: [20, 20] },
-    { description: "Metro", amount: [30, 40] },
-    { description: "Auto", amount: [40, 70] },
-    { description: "Snacks", amount: [40, 70] },
-    { description: "Coffee", amount: [45, 60] },
+    { category: "Food", notes: "Morning Chai", amount: [20, 20] },
+    { category: "Transport", notes: "Metro", amount: [30, 40] },
+    { category: "Transport", notes: "Auto", amount: [40, 70] },
+    { category: "Food", notes: "Snacks", amount: [40, 70] },
+    { category: "Food", notes: "Coffee", amount: [45, 60] },
   ];
   const MEDIUM = [
-    { description: "Lunch", amount: [100, 150] },
-    { description: "Groceries", amount: [120, 260] },
-    { description: "Fruits", amount: [80, 120] },
+    { category: "Food", notes: "Lunch", amount: [100, 150] },
+    { category: "Food", notes: "Groceries", amount: [120, 260] },
+    { category: "Food", notes: "Fruits", amount: [80, 120] },
   ];
   const SPLURGE = [
-    { description: "Dinner out", amount: [220, 350] },
-    { description: "Movie", amount: [250, 320] },
-    { description: "Shopping", amount: [200, 450] },
+    { category: "Food", notes: "Dinner out", amount: [220, 350] },
+    { category: "Entertainment", notes: "Movie", amount: [250, 320] },
+    { category: "Shopping", notes: "Shopping", amount: [200, 450] },
   ];
 
   /** Today's records stay the original curated set so the header reads nicely. */
   const expenseRecords = [
-    { datetime: at(8, 15), amount: 20, description: "Morning Chai" },
-    { datetime: at(9, 30), amount: 30, description: "Metro" },
-    { datetime: at(13, 5), amount: 120, description: "Lunch" },
-    { datetime: at(16, 45), amount: 50, description: "Snacks" },
-    { datetime: at(19, 20), amount: 100, description: "Groceries" },
+    { datetime: at(8, 15), amount: 20, category: "Food", notes: "Morning Chai" },
+    { datetime: at(9, 30), amount: 30, category: "Transport", notes: "Metro" },
+    { datetime: at(13, 5), amount: 120, category: "Food", notes: "Lunch" },
+    { datetime: at(16, 45), amount: 50, category: "Food", notes: "Snacks" },
+    { datetime: at(19, 20), amount: 100, category: "Food", notes: "Groceries" },
   ];
 
   // The previous 20 days: 1–3 light items everywhere, lunch on most weekdays,
@@ -83,7 +83,8 @@
       expenseRecords.push({
         datetime: daysAgoAt(daysBack, 20, 30),
         amount: between(...splurge.amount),
-        description: splurge.description,
+        category: splurge.category,
+        notes: splurge.notes,
       });
       count -= 1;
     }
@@ -94,7 +95,8 @@
       expenseRecords.push({
         datetime: daysAgoAt(daysBack, 8 + i * 4 % 12, between(0, 55)),
         amount: between(...item.amount),
-        description: item.description,
+        category: item.category,
+        notes: item.notes,
       });
     }
   }
@@ -109,8 +111,22 @@
   localStorage.setItem(
     "expense-store",
     JSON.stringify({
-      state: { currentExpense, expenseRecords },
-      version: 1,
+      state: {
+        currentExpense,
+        expenseRecords,
+        categories: [
+          "Food",
+          "Transport",
+          "Bills",
+          "Shopping",
+          "Entertainment",
+          "Health",
+          "Other",
+        ],
+      },
+      // Keep in sync with EXPENSE_STORE_VERSION so reseeding does not trigger
+      // the description -> category migration.
+      version: 2,
     }),
   );
 

@@ -45,7 +45,7 @@ const TopExpensesList = ({
               <span className="text-muted-foreground font-bold">
                 {index + 1}.
               </span>
-              <h2 className="text-xl">{record.description}</h2>
+              <h2 className="text-xl">{record.category}</h2>
               <div className="flex gap-3">
                 <Pencil
                   className="h-4 w-4 text-app-700 cursor-pointer"
@@ -57,6 +57,13 @@ const TopExpensesList = ({
                 />
               </div>
             </div>
+            {/* Migrated records have the old description as both category and
+                note, so skip the duplicate line. */}
+            {record.notes && record.notes !== record.category && (
+              <p className="text-sm text-muted-foreground line-clamp-1">
+                {record.notes}
+              </p>
+            )}
             <span className="uppercase text-sm text-muted-foreground">
               {formatDateTime(record.datetime)}
             </span>
