@@ -8,12 +8,17 @@ import {
 } from "@/components/ui/dialog";
 import { useExpenseStore } from "@/store";
 import { Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import CategoryCombobox from "@/components/CategoryCombobox";
+import CategorySuggestionChips from "@/components/CategorySuggestionChips";
+import {
+  buildCategoryProfile,
+  rankCategorySuggestions,
+} from "@/lib/category-suggestions";
 import { UNCATEGORIZED_CATEGORY } from "@/lib/migrations/expense-migrations";
 import {
   getFirstOfThisMonth,
@@ -142,29 +147,81 @@ const buildDatetimeForFilter = (filter: ExpenseFilter): string => {
 const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
   const { isDialogOpen, setIsDialogOpen, setUpdateId, updateId, filter } =
     props;
-  const { addExpense, updateExpense, getExpenseRecord, categories, addCategory } =
-    useExpenseStore();
+  const {
+    addExpense,
+    updateExpense,
+    getExpenseRecord,
+    categories,
+    addCategory,
+    expenseRecords,
+  } = useExpenseStore();
   const [showNotes, setShowNotes] = useState(false);
+  const [debouncedAmount, setDebouncedAmount] = useState("");
+  const [frozenAmount, setFrozenAmount] = useState<string | null>(null);
+  const [suggestionNow, setSuggestionNow] = useState(() => new Date());
 
   const form = useForm<ExpenseRecordForm>({
     resolver: zodResolver(expenseRecordForm),
   });
 
   const category = form.watch("category") ?? "";
+  const amount = form.watch("amount") ?? "";
+
+  // Rank after a pause instead of on every keystroke, so the chips do not
+  // flicker while the amount is being typed.
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedAmount(amount), 250);
+    return () => window.clearTimeout(timer);
+  }, [amount]);
+
+  const currentAmount = Number(amount);
+  const hasValidAmount = Number.isFinite(currentAmount) && currentAmount > 0;
+
+  const rankingAmount = frozenAmount ?? debouncedAmount;
+  const parsedRankingAmount = Number(rankingAmount);
+  const suggestionAmount =
+    Number.isFinite(parsedRankingAmount) && parsedRankingAmount > 0
+      ? parsedRankingAmount
+      : undefined;
+
+  // Refresh the clock each time the dialog opens so decay and time-of-day
+  // weights are not frozen from a session that has been idle for hours.
+  useEffect(() => {
+    if (isDialogOpen) setSuggestionNow(new Date());
+  }, [isDialogOpen]);
+
+  const categoryProfile = useMemo(
+    () => buildCategoryProfile(expenseRecords, categories, suggestionNow),
+    [expenseRecords, categories, suggestionNow],
+  );
+
+  const suggestions = useMemo(
+    () =>
+      rankCategorySuggestions(categoryProfile, {
+        now: suggestionNow,
+        amount: suggestionAmount,
+      }),
+    [categoryProfile, suggestionAmount, suggestionNow],
+  );
 
   useEffect(() => {
-    if (updateId && isDialogOpen) {
+    if (!isDialogOpen) return;
+    setFrozenAmount(null);
+
+    if (updateId) {
       const record = getExpenseRecord(updateId);
       if (record) {
         form.setValue("amount", String(record.amount));
         form.setValue("category", record.category);
         form.setValue("notes", record.notes);
+        setDebouncedAmount(String(record.amount));
         setShowNotes(Boolean(record.notes));
       } else {
         setUpdateId(null);
       }
-    } else if (!updateId && isDialogOpen) {
+    } else {
       form.reset();
+      setDebouncedAmount("");
       setShowNotes(false);
     }
   }, [updateId, isDialogOpen]);
@@ -178,7 +235,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
     }
   };
 
-  const onSubmit = form.handleSubmit(async (data) => {
+  const persistExpense = (data: ExpenseRecordForm): boolean => {
     try {
       expenseRecordForm.parse(data);
 
@@ -205,13 +262,43 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
           buildDatetimeForFilter(filter)
         );
       }
-      form.reset();
-      setShowNotes(false);
-      setIsDialogOpen(false);
+      return true;
     } catch (error) {
       console.error(error);
+      return false;
     }
+  };
+
+  const closeAfterSave = () => {
+    form.reset();
+    setShowNotes(false);
+    setIsDialogOpen(false);
+  };
+
+  const onSubmit = form.handleSubmit((data) => {
+    if (!persistExpense(data)) return;
+    closeAfterSave();
   });
+
+  const handleSuggestionPick = (nextCategory: string) => {
+    form.setValue("category", nextCategory, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    // Editing an existing record still goes through the explicit save button.
+    if (updateId) return;
+
+    if (!hasValidAmount) {
+      form.setFocus("amount");
+      return;
+    }
+
+    if (!persistExpense({ ...form.getValues(), category: nextCategory })) {
+      return;
+    }
+    closeAfterSave();
+  };
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
@@ -221,6 +308,8 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
         onClick={() => {
           setUpdateId(null);
           setShowNotes(false);
+          setFrozenAmount(null);
+          setDebouncedAmount("");
           form.reset();
         }}
       >
@@ -257,6 +346,17 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
                   {form.formState.errors.amount.message}
                 </p>
               )}
+            </div>
+
+            <div className="w-full my-1">
+              <CategorySuggestionChips
+                suggestions={suggestions}
+                selectedCategory={category}
+                canRecord={hasValidAmount}
+                onPick={handleSuggestionPick}
+                onInteractionStart={() => setFrozenAmount(debouncedAmount)}
+                onInteractionEnd={() => setFrozenAmount(null)}
+              />
             </div>
 
             <div className="flex flex-col w-full">

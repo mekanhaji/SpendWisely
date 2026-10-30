@@ -2,6 +2,12 @@
 
 All notable changes to Spend Wisely are documented here.
 
+## 0.5.2
+
+### Added
+
+- **Category suggestions.** The add-expense dialog now shows up to four category chips ranked from your history: how recently and often you used a category, the time of day, and the amount once you type one. Tapping a chip with an amount filled in records the expense immediately; with no amount it selects the category and focuses the amount field. Under 15 recorded expenses the chips use plain frequency order, and a chip is marked as a likely match only when the lead is clear.
+
 ## 0.5.0
 
 ### Added
