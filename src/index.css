@@ -35,10 +35,34 @@
     --input: 44 15% 81%;
     --ring: 98 14% 36%;
 
-    /* Secondary brand (clay). Nothing consumes this yet. */
+    /* Secondary brand (clay): the accent for the FAB, active tab and
+       "likely match" highlights. Stored as "r g b" channels. White on this
+       clay is 4.0:1, fine for icons and large text. */
     --brand: 167 115 100;
+    --brand-foreground: 255 255 255;
 
-    --radius: 0.5rem;
+    --radius: 0.875rem;
+
+    /* Elevation. Warm-tinted so shadows sit naturally on the cream page. */
+    --shadow-card: 0 1px 2px rgb(60 52 30 / 0.06),
+      0 4px 12px -4px rgb(60 52 30 / 0.08);
+    --shadow-float: 0 10px 24px -6px rgb(60 52 30 / 0.3),
+      0 2px 6px rgb(60 52 30 / 0.14);
+
+    /* Category tones for CategoryAvatar: background / glyph pairs built from
+       the sage, clay, warning and error ramps plus two neutrals. */
+    --cat-1-bg: 212 222 206;
+    --cat-1-fg: 64 76 57;
+    --cat-2-bg: 240 221 213;
+    --cat-2-fg: 122 74 58;
+    --cat-3-bg: 239 217 190;
+    --cat-3-fg: 98 71 34;
+    --cat-4-bg: 234 202 195;
+    --cat-4-fg: 94 50 38;
+    --cat-5-bg: 226 228 196;
+    --cat-5-fg: 83 86 40;
+    --cat-6-bg: 226 222 212;
+    --cat-6-fg: 87 82 70;
 
     /* App ramps. Stored as "r g b" channels so the opacity modifier keeps
        working, e.g. bg-app-200/80. Values flip per theme, which is why
@@ -99,8 +123,28 @@
     --input: 93 7% 26%;
     --ring: 85 13% 65%;
 
-    /* Secondary brand (clay). Nothing consumes this yet. */
+    /* Secondary brand (clay), lightened for the dark surface. */
     --brand: 208 154 137;
+    --brand-foreground: 27 31 25;
+
+    /* Dark surfaces get a hairline instead of a drop shadow, which would
+       just disappear against the near-black page. */
+    --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.04);
+    --shadow-float: 0 10px 24px -6px rgb(0 0 0 / 0.65),
+      0 0 0 1px rgb(255 255 255 / 0.07);
+
+    --cat-1-bg: 57 66 52;
+    --cat-1-fg: 190 197 180;
+    --cat-2-bg: 74 53 46;
+    --cat-2-fg: 208 154 137;
+    --cat-3-bg: 78 63 44;
+    --cat-3-fg: 232 200 146;
+    --cat-4-bg: 77 52 45;
+    --cat-4-fg: 222 171 156;
+    --cat-5-bg: 66 68 40;
+    --cat-5-fg: 205 208 150;
+    --cat-6-bg: 62 60 54;
+    --cat-6-fg: 205 200 188;
 
     /* App ramps. The scale is not monotonic here: components use 700 as a
        text/icon colour and 800 as a surface, so 700 lands well above 800. */
@@ -136,16 +180,56 @@
   }
 }
 
-body {
-  font-family: "Cascadia Code", monospace;
-  min-height: 100dvh;
-}
-
 @layer base {
   * {
     @apply border-border;
   }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground antialiased;
+    min-height: 100dvh;
+    /* No rubber-band / pull-to-refresh bounce, so the app feels fixed. */
+    overscroll-behavior-y: none;
+    /* Removes the 300ms double-tap-zoom delay on taps. */
+    touch-action: manipulation;
+  }
+
+  /* App chrome should not start a text selection on a long press. Inputs and
+     list text stay selectable. */
+  button,
+  [role="button"],
+  [role="tab"],
+  nav {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Tab and page switches cross-fade (navigate(..., { viewTransition: true })).
+   The header and tab bar have their own view-transition-name, so only the page
+   body fades. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -1,99 +1,92 @@
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
-import { useUserSettingsStore } from "@/store";
-import InstallAppBanner from "./components/InstallAppBanner";
-import SettingsCard from "./components/SettingsCard";
-import { settingList, themeOptions, type SettingId } from "./setting";
+import { Input } from "@/components/ui/input";
+import SegmentedControl from "@/components/ui/segmented-control";
+import { useExpenseStore, useUserSettingsStore } from "@/store";
+import { AppRows } from "./components/AppRows";
+import { DataRows } from "./components/DataRows";
+import { SettingsRow, SettingsSection } from "./components/SettingsSection";
+import { settingCopy, themeOptions } from "./setting";
 
 const Settings = () => {
   const navigate = useNavigate();
   const userSettings = useUserSettingsStore();
-
-  const controls: Record<SettingId, React.ReactNode> = {
-    theme: (
-      <div
-        role="group"
-        aria-label="Theme"
-        className="flex overflow-hidden rounded-lg border border-border"
-      >
-        {themeOptions.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={userSettings.theme === option.value}
-            onClick={() => userSettings.setTheme(option.value)}
-            className={cn("px-3 py-1 text-sm transition-colors", {
-              "bg-primary text-primary-foreground":
-                userSettings.theme === option.value,
-              "text-muted-foreground hover:bg-accent hover:text-accent-foreground":
-                userSettings.theme !== option.value,
-            })}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    ),
-    currency: (
-      <Input
-        type="text"
-        value={userSettings.currency}
-        className="w-full text-center"
-        placeholder="ex. $"
-        onChange={(e) => userSettings.updateCurrency(e.target.value)}
-      />
-    ),
-    dailyLimit: (
-      <Input
-        type="number"
-        value={userSettings.dailyLimit || ""}
-        className="w-full text-center"
-        placeholder="ex. 10"
-        onChange={(e) => userSettings.updateDailyLimit(Number(e.target.value))}
-      />
-    ),
-    warningLimit: (
-      <Input
-        type="number"
-        value={userSettings.warningLimit || ""}
-        className="w-full text-center"
-        placeholder="ex. 5"
-        onChange={(e) => userSettings.updateWarningLimit(Number(e.target.value))}
-      />
-    ),
-    categories: (
-      <button
-        type="button"
-        onClick={() => navigate("/settings/categories")}
-        className="px-3 py-1 text-sm rounded-md border border-border text-foreground transition-colors hover:bg-accent"
-      >
-        Manage
-        <ChevronRight className="h-4 w-4 ml-1" />
-      </button>
-    ),
-  };
+  const categoryCount = useExpenseStore((state) => state.categories.length);
 
   return (
-    <main className="flex flex-col gap-2 mt-2">
-      <InstallAppBanner />
+    <div className="mt-2 flex flex-col gap-6">
+      <SettingsSection title="Budget">
+        <SettingsRow {...settingCopy.dailyLimit} htmlFor="daily-limit">
+          <Input
+            id="daily-limit"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            value={userSettings.dailyLimit || ""}
+            className="h-10 w-28 text-right"
+            placeholder="ex. 500"
+            onChange={(e) =>
+              userSettings.updateDailyLimit(Number(e.target.value))
+            }
+          />
+        </SettingsRow>
+        <SettingsRow {...settingCopy.warningLimit} htmlFor="warning-limit">
+          <Input
+            id="warning-limit"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            value={userSettings.warningLimit || ""}
+            className="h-10 w-28 text-right"
+            placeholder="ex. 400"
+            onChange={(e) =>
+              userSettings.updateWarningLimit(Number(e.target.value))
+            }
+          />
+        </SettingsRow>
+      </SettingsSection>
 
-      {settingList.map((setting) => (
-        <SettingsCard
-          key={setting.id}
-          title={setting.title}
-          description={setting.description(userSettings)}
-          bodyClassName={setting.bodyClassName}
-        >
-          {controls[setting.id]}
-        </SettingsCard>
-      ))}
+      <SettingsSection title="Preferences">
+        <SettingsRow {...settingCopy.currency} htmlFor="currency">
+          <Input
+            id="currency"
+            type="text"
+            maxLength={4}
+            value={userSettings.currency}
+            className="h-10 w-20 text-center"
+            placeholder="ex. $"
+            onChange={(e) => userSettings.updateCurrency(e.target.value)}
+          />
+        </SettingsRow>
+        <SettingsRow {...settingCopy.theme}>
+          <SegmentedControl
+            ariaLabel="Theme"
+            value={userSettings.theme}
+            onChange={userSettings.setTheme}
+            options={themeOptions}
+            className="w-60"
+          />
+        </SettingsRow>
+      </SettingsSection>
 
-      <p className="text-center text-xs text-muted-foreground mt-4">
+      <SettingsSection title="Data">
+        <SettingsRow
+          title={settingCopy.categories.title}
+          description={`${categoryCount} ${categoryCount === 1 ? "category" : "categories"}. ${settingCopy.categories.description}`}
+          onClick={() =>
+            navigate("/settings/categories", { viewTransition: true })
+          }
+        />
+        <DataRows />
+      </SettingsSection>
+
+      <SettingsSection title="App">
+        <AppRows />
+      </SettingsSection>
+
+      <p className="text-center text-xs text-muted-foreground">
         v{__APP_VERSION__} ({__APP_COMMIT__})
       </p>
-    </main>
+    </div>
   );
 };
 

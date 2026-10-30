@@ -1,4 +1,5 @@
 import type { ExpenseRecord } from "@/store";
+import { UNCATEGORIZED_CATEGORY } from "@/lib/migrations/expense-migrations";
 import {
   matchesFilter,
   resolveFilterRange,
@@ -91,6 +92,42 @@ export const getTopExpenses = (
   limit: number = TOP_EXPENSES_LIMIT,
 ): ExpenseRecord[] =>
   [...filteredRecords].sort((a, b) => b.amount - a.amount).slice(0, limit);
+
+export type CategoryTotal = {
+  category: string;
+  total: number;
+  count: number;
+  /** Fraction of the grand total, 0 to 1. */
+  share: number;
+};
+
+/**
+ * Spend per category, biggest first. Names are matched case-insensitively and
+ * keep the casing of the first record seen.
+ */
+export const getCategoryTotals = (
+  records: ExpenseRecord[],
+): CategoryTotal[] => {
+  const byCategory = new Map<string, Omit<CategoryTotal, "share">>();
+
+  for (const record of records) {
+    const name = record.category.trim() || UNCATEGORIZED_CATEGORY;
+    const key = name.toLowerCase();
+    const entry = byCategory.get(key) ?? { category: name, total: 0, count: 0 };
+    entry.total += record.amount;
+    entry.count += 1;
+    byCategory.set(key, entry);
+  }
+
+  const grandTotal = records.reduce((sum, record) => sum + record.amount, 0);
+
+  return Array.from(byCategory.values())
+    .sort((a, b) => b.total - a.total)
+    .map((entry) => ({
+      ...entry,
+      share: grandTotal > 0 ? entry.total / grandTotal : 0,
+    }));
+};
 
 export type DayBudgetStatus = "ok" | "warning" | "over";
 

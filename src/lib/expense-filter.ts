@@ -137,3 +137,38 @@ export const resolveFilterRange = (
     }
   }
 };
+
+/** Today/Yesterday presets and a custom From = To pick cover exactly one day. */
+export const isSingleDayFilter = (filter: ExpenseFilter): boolean =>
+  filter.mode === "today" ||
+  filter.mode === "yesterday" ||
+  (filter.mode === "custom" &&
+    Boolean(filter.from) &&
+    filter.from === filter.to);
+
+const formatShortDate = (iso?: string): string => {
+  const date = iso ? parseLocalISODate(iso) : null;
+  return date
+    ? date.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+    : "";
+};
+
+/** Human label for a filter, e.g. "This week" or "12 Oct - 18 Oct". */
+export const describeFilter = (filter: ExpenseFilter): string => {
+  switch (filter.mode) {
+    case "today":
+      return "Today";
+    case "yesterday":
+      return "Yesterday";
+    case "week":
+      return "This week";
+    case "month":
+      return "This month";
+    case "all":
+      return "All time";
+    case "custom":
+      return filter.from === filter.to
+        ? formatShortDate(filter.from)
+        : `${formatShortDate(filter.from)} - ${formatShortDate(filter.to)}`;
+  }
+};

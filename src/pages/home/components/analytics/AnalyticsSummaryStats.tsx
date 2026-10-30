@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { parseLocalISODate } from "@/lib/expense-filter";
 import type { SummaryStats } from "@/lib/expense-analytics";
 
@@ -21,13 +22,15 @@ const Tile = ({
   value: string;
   subvalue?: string;
 }) => (
-  <div className="bg-app-100 dark:bg-app-800 rounded-lg p-3 flex flex-col gap-1 min-w-0">
-    <span className="text-sm text-muted-foreground uppercase">{label}</span>
-    <span className="text-xl font-bold truncate">{value}</span>
+  <Card className="flex min-w-0 flex-col gap-1 p-4">
+    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      {label}
+    </span>
+    <span className="truncate text-2xl font-semibold tabular-nums">{value}</span>
     {subvalue && (
       <span className="text-xs text-muted-foreground">{subvalue}</span>
     )}
-  </div>
+  </Card>
 );
 
 const AnalyticsSummaryStats = ({
@@ -37,7 +40,7 @@ const AnalyticsSummaryStats = ({
   const hasData = stats.transactionCount > 0;
 
   return (
-    <div className="grid grid-cols-2 gap-3 w-full">
+    <div className="grid w-full grid-cols-2 gap-3 lg:grid-cols-4">
       <Tile label="Total spent" value={`${currency}${stats.total}`} />
       <Tile
         label="Average / day"

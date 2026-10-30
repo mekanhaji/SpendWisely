@@ -1,20 +1,11 @@
-import type { ThemePreference, UserSettings } from "@/store";
+import type { ThemePreference } from "@/store";
 
 export type SettingId =
-  | "theme"
-  | "currency"
   | "dailyLimit"
   | "warningLimit"
+  | "currency"
+  | "theme"
   | "categories";
-
-export type SettingDefinition = {
-  id: SettingId;
-  title: string;
-  /** Takes current settings so per-mode copy (theme) can react. */
-  description: (userSettings: UserSettings) => string;
-  /** Width classes handed to SettingsCard's control slot. */
-  bodyClassName?: string;
-};
 
 export const themeOptions: { value: ThemePreference; label: string }[] = [
   { value: "light", label: "Light" },
@@ -22,38 +13,30 @@ export const themeOptions: { value: ThemePreference; label: string }[] = [
   { value: "system", label: "System" },
 ];
 
-const themeDescription: Record<ThemePreference, string> = {
-  light: "Don't Burn your eyes, enable dark mode 🌚",
-  dark: "Let's see the light, disable the dark mode 🌞",
-  system: "Following your device, and switching along with it 🖥️",
-};
-
-export const settingList: SettingDefinition[] = [
-  {
-    id: "theme",
-    title: "Theme",
-    bodyClassName: "w-auto",
-    description: (userSettings) => themeDescription[userSettings.theme],
+/** Row titles and helper text, kept in one place so the copy stays consistent. */
+export const settingCopy: Record<
+  SettingId,
+  { title: string; description: string }
+> = {
+  dailyLimit: {
+    title: "Daily limit",
+    description: "What is enough for a day.",
   },
-  {
-    id: "currency",
+  warningLimit: {
+    title: "Warn me at",
+    description: "Spending turns amber from this amount.",
+  },
+  currency: {
     title: "Currency",
-    description: () => "What symbol do you use to represent your money? 🤑",
+    description: "The symbol shown next to amounts.",
   },
-  {
-    id: "dailyLimit",
-    title: "Daily Expense Limit",
-    description: () => "What is enough for the day? 🤔",
+  theme: {
+    title: "Theme",
+    // The switcher says it all, and the control is too wide for a caption.
+    description: "",
   },
-  {
-    id: "warningLimit",
-    title: "Daily Expense Warning",
-    description: () => "When should I warn you? 🚨",
-  },
-  {
-    id: "categories",
+  categories: {
     title: "Categories",
-    description: () =>
-      "Add, rename or remove the categories you file your expenses under 🗂️",
+    description: "Add, rename or remove them.",
   },
-];
+};

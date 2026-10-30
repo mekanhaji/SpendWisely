@@ -5,13 +5,22 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import Home from "./pages/home";
+import AddIntentRoute from "./pages/add";
 import Categories from "./pages/categories";
-import { TAB_PATHS } from "./layout";
+import { TAB_PATHS } from "./layout/tabs";
 import {
   type BeforeInstallPromptEvent,
+  useExpenseStore,
   usePwaInstallStore,
   useUserSettingsStore,
 } from "./store";
+import { getDailyTotals, getDayBudgetStatus } from "./lib/expense-analytics";
+import {
+  isStandalone,
+  requestPersistentStorage,
+  setLaunchHandler,
+  updateAppBadge,
+} from "./lib/pwa";
 
 /**
  * Hex mirrors of --background in index.css; Chrome paints the PWA's status
@@ -36,6 +45,10 @@ const router = createBrowserRouter([
     element: <Home />,
   },
   {
+    path: "/add",
+    element: <AddIntentRoute />,
+  },
+  {
     path: "/settings/categories",
     element: <Categories />,
   },
@@ -58,6 +71,38 @@ function App() {
     (state) => state.markInstallUnsupported,
   );
   const markInstalled = usePwaInstallStore((state) => state.markInstalled);
+  const expenseRecords = useExpenseStore((state) => state.expenseRecords);
+  const dailyLimit = useUserSettingsStore((state) => state.dailyLimit);
+  const warningLimit = useUserSettingsStore((state) => state.warningLimit);
+
+  // Launches into an open window (the "Add expense" shortcut, shared text).
+  useEffect(() => {
+    setLaunchHandler((url) => {
+      void router.navigate(`${url.pathname}${url.search}${url.hash}`);
+    });
+  }, []);
+
+  // Dot on the home-screen icon while today is over the limit. Re-checked when
+  // the app comes back to the foreground so it clears after midnight.
+  useEffect(() => {
+    const refreshBadge = () => {
+      const todayTotal = getDailyTotals(expenseRecords, {
+        mode: "today",
+      }).reduce((sum, day) => sum + day.total, 0);
+      updateAppBadge(
+        getDayBudgetStatus(todayTotal, dailyLimit, warningLimit) === "over",
+      );
+    };
+
+    refreshBadge();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") refreshBadge();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, [expenseRecords, dailyLimit, warningLimit]);
 
   useEffect(() => {
     const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -82,13 +127,10 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as Navigator & { standalone?: boolean }).standalone ===
-        true;
-
-    if (isStandalone) {
+    if (isStandalone()) {
       markInstalled();
+      // Installed users keep their expenses only in localStorage.
+      void requestPersistentStorage();
     } else if (!("onbeforeinstallprompt" in window)) {
       markInstallUnsupported();
     }
@@ -100,6 +142,7 @@ function App() {
 
     const handleAppInstalled = () => {
       markInstalled();
+      void requestPersistentStorage();
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);

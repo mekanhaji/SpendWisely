@@ -2,6 +2,29 @@
 
 All notable changes to Spend Wisely are documented here.
 
+## Unreleased
+
+### Changed
+
+- **New look.** Inter replaces the monospace font, with tabular numbers for amounts. Screens use cards and grouped lists, the clay accent is now used, and dark mode keeps the same structure.
+- **App-style navigation.** A slim top bar and a bottom tab bar replace the large title and top tabs. The add button sits above the tab bar, on the thumb side. Tab and page changes cross-fade.
+- **Tablet and desktop layout.** From 768px wide, a slim icon rail (icons with labels underneath, plus the Add button) sits beside the centered content instead of the bottom bar. The content column is wider, Analytics uses a two-column grid on large screens, sheets open as centered dialogs, and toasts appear bottom-right. Phones are unchanged. The app no longer locks to portrait, so installed tablets can rotate.
+- **Home.** The budget header now shows what is left of the daily limit (or how far over). Filters are one scrollable row. Expenses are grouped by day with sticky day headers and day totals.
+- **Add and edit** open as a bottom sheet with a large amount field. Save stays disabled until the amount is valid, so an empty amount can no longer be saved as 0.
+- **Analytics.** New "By category" breakdown, over-limit days are highlighted in the chart, and a Share button sends a text summary (or copies it where sharing is not available).
+- **Settings** is grouped into Budget, Preferences, Data and App. Categories are renamed and deleted from sheets.
+
+### Added
+
+- **Swipe to delete, with Undo.** Swipe an expense left to delete it. Every delete (swipe or button) shows an Undo toast.
+- **Backup and restore.** Export everything as JSON, export expenses as CSV, and import a backup. Imports are validated, older backups are migrated, and you confirm before anything is replaced.
+- **Works offline from the first visit.** The app shell is cached on install, so every screen opens offline even if you never visited it online.
+- **Add expense shortcut** (long-press the app icon) and **share target**: share a payment message to the app and the add sheet opens with the amount and note filled in (Android).
+- **App badge** on the home-screen icon while today is over the daily limit.
+- **Protect my data.** Asks the browser to keep your expenses when storage runs low; also requested automatically for installed apps and after the first expense.
+- **Maskable app icon**, iOS home-screen meta tags and edge-to-edge layout with safe-area support.
+- Update notice is now a toast with a Reload button, plus an "Update available" row in Settings.
+
 ## 0.5.2
 
 ### Added

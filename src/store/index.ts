@@ -81,6 +81,24 @@ export type ExpenseStore = {
    * @returns
    */
   removeExpense: (timestamp: string) => void;
+  /**
+   * Put a previously removed record back as-is (used by "Undo"). Does nothing
+   * if a record with the same timestamp exists again.
+   *
+   * @param record
+   * @returns
+   */
+  restoreExpense: (record: ExpenseRecord) => void;
+  /**
+   * Replace every expense and category (used when importing a backup).
+   *
+   * @param data
+   * @returns
+   */
+  replaceAll: (data: {
+    expenseRecords: ExpenseRecord[];
+    categories: string[];
+  }) => void;
 };
 
 const createExpenseRecord = (
@@ -207,6 +225,24 @@ const useExpenseStore = create(
           return state;
         });
       },
+      restoreExpense: (record) =>
+        set((state) => {
+          if (state.expenseRecords.some((r) => r.datetime === record.datetime)) {
+            return state;
+          }
+          return {
+            expenseRecords: [...state.expenseRecords, record],
+            categories: mergeCategoryNames(state.categories, [record.category]),
+          };
+        }),
+      replaceAll: ({ expenseRecords, categories }) =>
+        set({
+          expenseRecords,
+          categories: mergeCategoryNames(
+            categories.length > 0 ? categories : DEFAULT_CATEGORIES,
+            expenseRecords.map((record) => record.category),
+          ),
+        }),
     }),
     {
       name: "expense-store",
@@ -313,6 +349,64 @@ const usePwaInstallStore = create<PwaInstallStore>((set, get) => ({
   },
 }));
 
+/** Prefill for the add-expense sheet, e.g. from the Web Share Target. */
+export type AddExpenseIntent = { amount?: string; notes?: string };
+
+export type AddIntentStore = {
+  intent: AddExpenseIntent | null;
+  request: (intent: AddExpenseIntent) => void;
+  consume: () => void;
+};
+
+/**
+ * Hand-off between the /add route (shortcut or share target) and Home, which
+ * owns the sheet. Home is re-created by the redirect, so the request has to
+ * live outside it.
+ */
+const useAddIntentStore = create<AddIntentStore>((set) => ({
+  intent: null,
+  request: (intent) => set({ intent }),
+  consume: () => set({ intent: null }),
+}));
+
+export type Toast = {
+  id: number;
+  message: string;
+  /** Label of the optional action button, e.g. "Undo". */
+  actionLabel?: string;
+  onAction?: () => void;
+  /** Milliseconds before it dismisses itself. Zero keeps it until dismissed. */
+  duration: number;
+};
+
+export type ToastInput = Omit<Toast, "id" | "duration"> & {
+  duration?: number;
+};
+
+export type ToastStore = {
+  toasts: Toast[];
+  show: (toast: ToastInput) => number;
+  dismiss: (id: number) => void;
+};
+
+const DEFAULT_TOAST_DURATION = 5000;
+let nextToastId = 1;
+
+const useToastStore = create<ToastStore>((set) => ({
+  toasts: [],
+  show: ({ duration = DEFAULT_TOAST_DURATION, ...toast }) => {
+    const id = nextToastId++;
+    set((state) => ({
+      toasts: [...state.toasts, { ...toast, id, duration }],
+    }));
+    return id;
+  },
+  dismiss: (id) =>
+    set((state) => ({
+      toasts: state.toasts.filter((toast) => toast.id !== id),
+    })),
+}));
+
 export type PwaUpdateStore = {
   waitingWorker: ServiceWorker | null;
   setWaitingWorker: (worker: ServiceWorker | null) => void;
@@ -338,8 +432,10 @@ const usePwaUpdateStore = create<PwaUpdateStore>((set, get) => ({
 }));
 
 export {
+  useAddIntentStore,
   useExpenseStore,
   usePwaInstallStore,
   usePwaUpdateStore,
+  useToastStore,
   useUserSettingsStore,
 };
