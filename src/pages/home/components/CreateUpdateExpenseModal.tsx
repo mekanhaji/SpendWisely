@@ -43,6 +43,8 @@ type CreateUpdateExpenseModalProps = {
   filter: ExpenseFilter;
   /** Amount and note to start a new expense with (shortcut / share target). */
   prefill?: AddExpenseIntent | null;
+  /** Whether the floating add button shows (hidden on the Settings tab). */
+  showTrigger?: boolean;
 };
 
 const getCreateTargetDate = (filter: ExpenseFilter): Date => {
@@ -154,6 +156,7 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
     updateId,
     filter,
     prefill,
+    showTrigger = true,
   } = props;
   const {
     addExpense,
@@ -319,19 +322,25 @@ const CreateUpdateExpenseModal = (props: CreateUpdateExpenseModalProps) => {
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        className="p-4 rounded-full bg-primary text-primary-foreground flex gap-1 items-center w-fit fixed bottom-8 left-1/2 transform -translate-x-1/2"
-        title="Add Expense"
-        onClick={() => {
-          setUpdateId(null);
-          setShowNotes(false);
-          setFrozenAmount(null);
-          setDebouncedAmount("");
-          form.reset();
-        }}
-      >
-        <Plus className="h-6 w-6" />
-      </DialogTrigger>
+      {showTrigger && (
+        // Docked above the tab bar, on the thumb side, inside the app column.
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[625px] justify-end px-4">
+          <DialogTrigger
+            className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-float transition duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            title="Add Expense"
+            aria-label="Add expense"
+            onClick={() => {
+              setUpdateId(null);
+              setShowNotes(false);
+              setFrozenAmount(null);
+              setDebouncedAmount("");
+              form.reset();
+            }}
+          >
+            <Plus className="h-7 w-7" />
+          </DialogTrigger>
+        </div>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

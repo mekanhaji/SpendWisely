@@ -209,7 +209,21 @@
   }
 }
 
+/* Tab and page switches cross-fade (navigate(..., { viewTransition: true })).
+   The header and tab bar have their own view-transition-name, so only the page
+   body fades. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
   *,
   ::before,
   ::after {

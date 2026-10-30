@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import AppLayout from "../../layout";
+import { tabFromPath } from "../../layout/tabs";
 import { useAddIntentStore, type AddExpenseIntent } from "@/store";
 import CreateUpdateExpenseModal from "./components/CreateUpdateExpenseModal";
 import ExpenseRecordsList from "./components/ExpenseRecordsList";
@@ -14,6 +16,7 @@ const Home = () => {
   const [updateId, setUpdateId] = useState<string | null>(null);
   const [filter, setFilter] = useState<ExpenseFilter>({ mode: "today" });
   const [prefill, setPrefill] = useState<AddExpenseIntent | null>(null);
+  const { pathname } = useLocation();
   const addIntent = useAddIntentStore((state) => state.intent);
   const consumeAddIntent = useAddIntentStore((state) => state.consume);
 
@@ -36,7 +39,7 @@ const Home = () => {
 
   return (
     <AppLayout>
-      <main className="my-2 flex flex-col items-center gap-4 pb-28">
+      <main className="my-2 flex flex-col items-center gap-4">
         <CreateUpdateExpenseModal
           isDialogOpen={isDialogOpen}
           setIsDialogOpen={setIsDialogOpen}
@@ -44,6 +47,7 @@ const Home = () => {
           updateId={updateId}
           filter={filter}
           prefill={prefill}
+          showTrigger={tabFromPath(pathname) !== "settings"}
         />
         <TabsContent value="home" className="w-full">
           <div className="my-2 flex flex-col items-center gap-4">

@@ -7,7 +7,7 @@ import {
 import Home from "./pages/home";
 import AddIntentRoute from "./pages/add";
 import Categories from "./pages/categories";
-import { TAB_PATHS } from "./layout";
+import { TAB_PATHS } from "./layout/tabs";
 import {
   type BeforeInstallPromptEvent,
   useExpenseStore,

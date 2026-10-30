@@ -66,7 +66,9 @@ const Settings = () => {
     categories: (
       <button
         type="button"
-        onClick={() => navigate("/settings/categories")}
+        onClick={() =>
+          navigate("/settings/categories", { viewTransition: true })
+        }
         className="px-3 py-1 text-sm rounded-md border border-border text-foreground transition-colors hover:bg-accent"
       >
         Manage

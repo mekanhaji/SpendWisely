@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,7 +18,6 @@ import { UNCATEGORIZED_CATEGORY } from "@/lib/migrations/expense-migrations";
 import { useExpenseStore } from "@/store";
 
 const Categories = () => {
-  const navigate = useNavigate();
   const {
     categories,
     expenseRecords,
@@ -93,15 +91,6 @@ const Categories = () => {
   return (
     <TabsContent value="settings">
       <main className="flex flex-col gap-2 mt-2">
-        <button
-          type="button"
-          onClick={() => navigate("/settings")}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground self-start"
-        >
-          <ChevronRight className="h-4 w-4 rotate-180" />
-          Back to Settings
-        </button>
-
         <SettingsCard
           title="Add category"
           description="Create a new category to file expenses under."
@@ -234,7 +223,7 @@ const Categories = () => {
 
 const CategoriesPage = () => {
   return (
-    <AppLayout headerOptions={{ title: "Categories" }}>
+    <AppLayout headerOptions={{ title: "Categories", back: "/settings" }}>
       <Categories />
     </AppLayout>
   );
